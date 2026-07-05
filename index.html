@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme-purple-green.css">
 </head>
 <body>
   <header class="topbar">
@@ -24,10 +25,13 @@
   <div class="app-shell">
     <aside class="dataset-panel panel">
       <div class="panel-heading">
-        <div><span class="eyebrow">01 / INPUT</span><h1>データセット</h1></div>
+        <button class="panel-title-button" id="dataset-panel-toggle" type="button" aria-expanded="true" aria-controls="dataset-panel-content" title="データセットを折り畳む">
+          <span><span class="eyebrow">01 / INPUT</span><strong>データセット</strong></span><b aria-hidden="true">‹</b>
+        </button>
         <label class="icon-button" title="ファイルを追加">＋<input id="file-input" type="file" accept=".dat,.txt,.csv,.xmu" multiple hidden></label>
       </div>
 
+      <div class="panel-content" id="dataset-panel-content">
       <label class="dropzone" id="dropzone">
         <input id="drop-input" type="file" accept=".dat,.txt,.csv,.xmu" multiple hidden>
         <span class="drop-icon">⇩</span>
@@ -40,6 +44,7 @@
       <div id="dataset-list" class="dataset-list" role="listbox" aria-label="データセット"></div>
 
       <div class="privacy-note"><span>●</span><div><strong>LOCAL PROCESSING</strong><small>データは端末外へ送信されません</small></div></div>
+      </div>
     </aside>
 
     <main class="workspace">
@@ -86,10 +91,16 @@
     </main>
 
     <aside class="controls-panel panel">
-      <div class="panel-heading control-heading"><div><span class="eyebrow">02 / PROCESS</span><h2>解析条件</h2></div><button id="reset-params" class="text-button" type="button">初期値</button></div>
+      <div class="panel-heading control-heading">
+        <button class="panel-title-button" id="controls-panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel-content" title="解析条件を折り畳む">
+          <b aria-hidden="true">›</b><span><span class="eyebrow">02 / PROCESS</span><strong>解析条件</strong></span>
+        </button>
+        <div class="control-heading-actions"><button id="apply-params" class="text-button" type="button">他へ適用</button><button id="reset-params" class="text-button" type="button">初期値</button></div>
+      </div>
+      <div class="panel-content" id="controls-panel-content">
       <div class="control-scroll">
         <section class="control-section open">
-          <button class="section-toggle" type="button"><span><i>1</i>吸収端と規格化</span><b>⌃</b></button>
+          <button class="section-toggle" type="button" aria-expanded="true"><span><i>1</i>吸収端と規格化</span><b>⌃</b></button>
           <div class="section-body">
             <label class="field wide"><span>E₀ <small>edge energy</small></span><div><input id="e0" type="number" step="0.1"><em>eV</em></div></label>
             <button class="detect-button" id="detect-e0" type="button">微分最大から再検出</button>
@@ -108,8 +119,8 @@
           </div>
         </section>
 
-        <section class="control-section open">
-          <button class="section-toggle" type="button"><span><i>2</i>背景と EXAFS</span><b>⌃</b></button>
+        <section class="control-section">
+          <button class="section-toggle" type="button" aria-expanded="false"><span><i>2</i>背景と EXAFS</span><b>⌃</b></button>
           <div class="section-body">
             <div class="field-pair">
               <label class="field"><span>Rbkg</span><div><input id="rbkg" type="number" min="0.5" max="2" step="0.05"><em>Å</em></div></label>
@@ -124,8 +135,8 @@
           </div>
         </section>
 
-        <section class="control-section open">
-          <button class="section-toggle" type="button"><span><i>3</i>フーリエ変換</span><b>⌃</b></button>
+        <section class="control-section">
+          <button class="section-toggle" type="button" aria-expanded="false"><span><i>3</i>フーリエ変換</span><b>⌃</b></button>
           <div class="section-body">
             <div class="field-pair">
               <label class="field"><span>k min</span><div><input id="k-min" type="number" min="0" step="0.1"><em>Å⁻¹</em></div></label>
@@ -141,6 +152,7 @@
         </section>
       </div>
       <div class="control-footer"><span>すべての変更は即時反映されます</span><span class="live-badge">LIVE</span></div>
+      </div>
     </aside>
   </div>
 
@@ -182,6 +194,16 @@
       <li><b>フーリエ変換</b><span>ノイズの少ないk範囲と窓関数を選び、|χ(R)|を確認します。</span></li>
     </ol>
     <p>本アプリは教育・予備解析向けです。精密解析では Athena / Larch 等との結果照合を推奨します。</p>
+  </dialog>
+
+  <dialog id="apply-params-dialog" class="apply-params-dialog">
+    <button class="dialog-close" id="apply-params-close" type="button" aria-label="閉じる">×</button>
+    <span class="eyebrow">COPY ANALYSIS PARAMETERS</span>
+    <h2>解析条件を他のデータへ適用</h2>
+    <p class="apply-params-description"><b id="apply-params-source"></b> の解析条件を適用するデータを選択してください。</p>
+    <div class="apply-targets" id="apply-targets"></div>
+    <label class="copy-e0-row"><input id="copy-e0" type="checkbox"><span><b>E₀もコピーする</b><small>オフの場合、各データで検出済みの E₀ を維持します</small></span></label>
+    <div class="apply-dialog-actions"><button id="apply-params-cancel" type="button">キャンセル</button><button id="apply-params-confirm" class="apply-button" type="button">選択したデータへ適用</button></div>
   </dialog>
 
   <script src="xas-core.js"></script>

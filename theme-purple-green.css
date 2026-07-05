@@ -1,0 +1,42 @@
+/*
+ * Purple / green theme override.
+ * The original teal theme remains intact in styles.css and can be restored by
+ * removing this stylesheet link from index.html.
+ */
+:root {
+  --bg: #100e16;
+  --panel: #17141f;
+  --panel-2: #201b2b;
+  --line: #362f45;
+  --line-soft: #292337;
+  --text: #eeeaf3;
+  --muted: #91899d;
+  --cyan: #6EB72D;
+  --cyan-dim: #4f8520;
+  --amber: #b6a6d0;
+  --violet: #8b75b2;
+  --green: #65508E;
+}
+
+.topbar, .chart-wrap, .import-actions { background-color: #120f19; }
+.dataset-panel, .controls-panel, .import-mapping { background: #17141f; }
+.dropzone, .section-toggle, .import-description { background: #15121c !important; }
+.quiet-button, .icon-button, .sample-button, .mini-button { background: #211c2b; }
+.brand-mark span { box-shadow: 0 0 10px #6EB72D77; }
+.pulse { box-shadow: 0 0 9px #6EB72D; }
+.export-button { border-color: #65508E; background: #2a2238; color: #d3c8e5; }
+.export-button:hover { background: #382d4b; }
+.dropzone { border-color: #4d405f; }
+.dropzone:hover, .dropzone.drag { background: #1c1825; }
+.dataset-item:hover { background: #211c2b; }
+.dataset-item.active { border-color: #65508E; background: #292139; }
+.apply-button { background: #2c243a; border-color: #65508E; }
+.plot-tab.active { background: linear-gradient(0deg, #2a223888, transparent 75%); }
+.chart-wrap { background-image: radial-gradient(#30283e 0.6px, transparent 0.6px); }
+.empty-state button, .detect-button { border-color: #65508E; background: #292139; }
+.state-dot { box-shadow: 0 0 7px #65508E88; }
+.field > div, .select-field select, .preview-table-wrap, .formula-preview { background: #110e17; }
+.switch-row input:checked + i { background: #65508E; }
+.method-note { background: #1d1925; border-left-color: #65508E; }
+.live-badge { border-color: #65508E; }
+dialog { background: #191520; border-color: #65508E; }

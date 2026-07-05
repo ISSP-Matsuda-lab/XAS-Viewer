@@ -1,7 +1,8 @@
 (function () {
   'use strict';
   const C = window.XASCore;
-  const colors = ['#42d8e7', '#e5a84d', '#9d8cff', '#69d59b', '#ef789d'];
+  const palette = { primary: '#65508E', accent: '#6EB72D', amber: '#c39b45', rose: '#c8667c', grid: '#30283e', muted: '#91899d' };
+  const colors = [palette.accent, palette.primary, '#c39b45', '#4a9c9c', '#c8667c'];
   const $ = id => document.getElementById(id);
   const state = { datasets: [], activeId: null, view: 'energy', overlays: true, analysisPoints: false, zoom: null, drag: null, datasetDragId: null, importQueue: [], pendingImport: null };
   const paramIds = ['pre-min','pre-max','norm-min','norm-max','norm-order','flatten','rbkg','bg-kweight','spline-min','spline-max','k-min','k-max','dk','plot-kweight','window','show-window'];
@@ -127,6 +128,7 @@
     const d = active();
     paramIds.forEach(id => { const el = $(id), value = d ? d.params[keyMap[id]] : C.DEFAULTS[keyMap[id]]; if (el.type === 'checkbox') el.checked = !!value; else el.value = value; el.disabled = !d; });
     $('e0').value = d?.params.e0?.toFixed(2) || ''; $('e0').disabled = !d; $('detect-e0').disabled = !d;
+    $('reset-params').disabled = !d; $('apply-params').disabled = !d || state.datasets.length < 2;
   }
   function readControl(id) { const el = $(id); return el.type === 'checkbox' ? el.checked : el.tagName === 'SELECT' && id === 'window' ? el.value : +el.value; }
 
@@ -153,14 +155,14 @@
     if (!a) return state.view === 'energy' && d.energy?.length ? [{ name:d.name, x:d.energy, y:d.mu, color:d.color, width:1.8 }] : [];
     if (state.view === 'energy') {
       const s = [{ name:d.name, x:a.energy, y:a.mu, color:d.color, width:1.8 }];
-      if (state.overlays && d.id === state.activeId) s.push({name:'pre-edge',x:a.energy,y:a.pre,color:'#69d59b',dash:'5 4',width:1},{name:'post-edge',x:a.energy,y:a.post,color:'#e5a84d',dash:'5 4',width:1},{name:'μ₀(E)',x:a.energy,y:a.background,color:'#ef789d',dash:'3 3',width:1});
+      if (state.overlays && d.id === state.activeId) s.push({name:'pre-edge',x:a.energy,y:a.pre,color:palette.accent,dash:'5 4',width:1},{name:'post-edge',x:a.energy,y:a.post,color:palette.amber,dash:'5 4',width:1},{name:'μ₀(E)',x:a.energy,y:a.background,color:palette.rose,dash:'3 3',width:1});
       return s;
     }
     if (state.view === 'normalized') return [{ name:d.name, x:a.energy, y:a.normalized, color:d.color, width:1.7 }, ...(state.overlays && d.id === state.activeId ? [{name:'reference 1.0',x:[a.e0,a.energy.at(-1)],y:[1,1],color:'#52666d',dash:'4 4',width:1}] : [])];
     if (state.view === 'k') {
       const weighted = a.chi.map((v,i) => v * a.k[i] ** a.params.plotKweight);
       const s = [{ name:`${d.name} · k${a.params.plotKweight}χ(k)`,x:a.k,y:weighted,color:d.color,width:1.6 }];
-      if (a.params.showWindow && d.id === state.activeId) { const max = Math.max(...weighted.map(Math.abs)) || 1; s.push({name:'window',x:a.k,y:a.window.map(v=>v*max),color:'#e5a84d',dash:'4 3',width:1}); }
+      if (a.params.showWindow && d.id === state.activeId) { const max = Math.max(...weighted.map(Math.abs)) || 1; s.push({name:'window',x:a.k,y:a.window.map(v=>v*max),color:palette.amber,dash:'4 3',width:1}); }
       return s;
     }
     return [{ name:d.name, x:a.r, y:a.ftMag, color:d.color, width:1.8 }];
@@ -177,11 +179,11 @@
     if (!state.analysisPoints || state.view !== 'energy' || !d?.analysis) return [];
     const a = d.analysis, e0 = a.e0, marker = (key, label, x, color) => ({ key, label, x, y: interpolateAt(x, a.energy, a.mu), color });
     return [
-      marker('preMin', 'PRE MIN', e0 + d.params.preMin, '#69d59b'),
-      marker('preMax', 'PRE MAX', e0 + d.params.preMax, '#69d59b'),
-      marker('e0', 'E₀', e0, '#42d8e7'),
-      marker('normMin', 'POST MIN', e0 + d.params.normMin, '#e5a84d'),
-      marker('normMax', 'POST MAX', e0 + d.params.normMax, '#e5a84d')
+      marker('preMin', 'PRE MIN', e0 + d.params.preMin, palette.accent),
+      marker('preMax', 'PRE MAX', e0 + d.params.preMax, palette.accent),
+      marker('e0', 'E₀', e0, palette.primary),
+      marker('normMin', 'POST MIN', e0 + d.params.normMin, palette.amber),
+      marker('normMax', 'POST MAX', e0 + d.params.normMax, palette.amber)
     ];
   }
   function moveAnalysisMarker(key, x) {
@@ -215,17 +217,17 @@
     const X=x=>m.l+(x-xmin)/(xmax-xmin)*pw, Y=y=>m.t+ph-(y-ymin)/(ymax-ymin)*ph;
     const ticks=(lo,hi,n)=>{const raw=(hi-lo)/n,pow=10**Math.floor(Math.log10(raw)),mags=[1,2,5,10],step=mags.find(v=>v*pow>=raw)*pow,start=Math.ceil(lo/step)*step,out=[];for(let v=start;v<=hi+step*.01;v+=step)out.push(v);return out;};
     const xt=ticks(xmin,xmax,7),yt=ticks(ymin,ymax,6), fmt=v=>Math.abs(v)>=100?Math.round(v).toString():Math.abs(v)>=10?v.toFixed(1):v.toFixed(2);
-    let html=`<defs><clipPath id="plotclip"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath></defs><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="#09131788"/>`;
-    xt.forEach(v=>html+=`<line x1="${X(v)}" y1="${m.t}" x2="${X(v)}" y2="${m.t+ph}" stroke="#1b2b31"/><text x="${X(v)}" y="${H-25}" fill="#63777e" font-size="9" text-anchor="middle" font-family="DM Mono">${fmt(v)}</text>`);
-    yt.forEach(v=>html+=`<line x1="${m.l}" y1="${Y(v)}" x2="${m.l+pw}" y2="${Y(v)}" stroke="#1b2b31"/><text x="${m.l-10}" y="${Y(v)+3}" fill="#63777e" font-size="9" text-anchor="end" font-family="DM Mono">${fmt(v)}</text>`);
+    let html=`<defs><clipPath id="plotclip"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath></defs><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="#120f1988"/>`;
+    xt.forEach(v=>html+=`<line x1="${X(v)}" y1="${m.t}" x2="${X(v)}" y2="${m.t+ph}" stroke="${palette.grid}"/><text x="${X(v)}" y="${H-25}" fill="${palette.muted}" font-size="9" text-anchor="middle" font-family="DM Mono">${fmt(v)}</text>`);
+    yt.forEach(v=>html+=`<line x1="${m.l}" y1="${Y(v)}" x2="${m.l+pw}" y2="${Y(v)}" stroke="${palette.grid}"/><text x="${m.l-10}" y="${Y(v)+3}" fill="${palette.muted}" font-size="9" text-anchor="end" font-family="DM Mono">${fmt(v)}</text>`);
     const [xl,yl]=labels(); html+=`<text x="${m.l+pw/2}" y="${H-7}" fill="#83969c" font-size="9" text-anchor="middle" font-family="DM Mono">${xl}</text><text transform="translate(13 ${m.t+ph/2}) rotate(-90)" fill="#83969c" font-size="9" text-anchor="middle" font-family="DM Mono">${yl}</text>`;
     series.forEach(s=>{let path='';const stride=Math.max(1,Math.floor(s.x.length/(W*1.5)));for(let i=0;i<s.x.length;i+=stride){if(!Number.isFinite(s.y[i]))continue;path+=`${path?'L':'M'}${X(s.x[i]).toFixed(1)},${Y(s.y[i]).toFixed(1)}`;}html+=`<path d="${path}" fill="none" stroke="${s.color}" stroke-width="${s.width}" stroke-dasharray="${s.dash||''}" vector-effect="non-scaling-stroke" clip-path="url(#plotclip)"/>`;});
-    if(state.view==='energy'&&state.overlays&&active()?.analysis){const x=X(active().analysis.e0);html+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${m.t+ph}" stroke="#42d8e7" stroke-dasharray="3 4" opacity=".8"/><text x="${x+5}" y="${m.t+13}" fill="#42d8e7" font-size="8" font-family="DM Mono">E₀ ${active().analysis.e0.toFixed(1)} eV</text>`;}
+    if(state.view==='energy'&&state.overlays&&active()?.analysis){const x=X(active().analysis.e0);html+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${m.t+ph}" stroke="${palette.primary}" stroke-dasharray="3 4" opacity=".9"/><text x="${x+5}" y="${m.t+13}" fill="#b9aad1" font-size="8" font-family="DM Mono">E₀ ${active().analysis.e0.toFixed(1)} eV</text>`;}
     html+=`<rect data-hit="1" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="transparent" style="cursor:crosshair"/>`;
     analysisMarkers(active()).forEach((marker, index) => {
       const x = X(marker.x), y = Y(marker.y); if (x < m.l || x > m.l + pw || y < m.t || y > m.t + ph) return;
       const anchor = index < 2 ? 'end' : index > 2 ? 'start' : 'middle', tx = x + (index < 2 ? -8 : index > 2 ? 8 : 0);
-      html += `<g data-marker="${marker.key}" style="cursor:ew-resize"><line x1="${x}" y1="${y}" x2="${x}" y2="${m.t+ph}" stroke="${marker.color}" stroke-dasharray="2 4" opacity=".45" pointer-events="none"/><circle cx="${x}" cy="${y}" r="10" fill="transparent"/><circle cx="${x}" cy="${y}" r="5" fill="#091317" stroke="${marker.color}" stroke-width="2" pointer-events="none"/><text x="${tx}" y="${y-10}" fill="${marker.color}" font-size="7" text-anchor="${anchor}" font-family="DM Mono" pointer-events="none">${marker.label}</text></g>`;
+      html += `<g data-marker="${marker.key}" style="cursor:ew-resize"><line x1="${x}" y1="${y}" x2="${x}" y2="${m.t+ph}" stroke="${marker.color}" stroke-dasharray="2 4" opacity=".45" pointer-events="none"/><circle cx="${x}" cy="${y}" r="10" fill="transparent"/><circle cx="${x}" cy="${y}" r="5" fill="#120f19" stroke="${marker.color}" stroke-width="2" pointer-events="none"/><text x="${tx}" y="${y-10}" fill="${marker.color}" font-size="7" text-anchor="${anchor}" font-family="DM Mono" pointer-events="none">${marker.label}</text></g>`;
     });
     svg.innerHTML=html; svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg._scale={xmin,xmax,ymin,ymax,m,pw,ph,X,Y,series};
     const unique=[]; series.forEach(s=>{if(!unique.some(u=>u.name===s.name))unique.push(s)}); $('chart-legend').innerHTML=unique.slice(0,5).map(s=>`<span class="legend-item"><i class="legend-swatch" style="background:${s.color}"></i>${escapeHtml(s.name)}</span>`).join('');
@@ -240,6 +242,40 @@
     const blob=new Blob([header+'\n'+rows.map(r=>r.map(v=>Number(v).toPrecision(10)).join(',')).join('\n')],{type:'text/csv'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=d.name.replace(/\.[^.]+$/,'')+`_${state.view}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
+  function toggleSidePanel(name) {
+    const shell = document.querySelector('.app-shell'), panel = document.querySelector(`.${name}-panel`), button = $(`${name === 'dataset' ? 'dataset' : 'controls'}-panel-toggle`);
+    const collapsed = panel.classList.toggle('collapsed');
+    shell.classList.toggle(`${name}-collapsed`, collapsed);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    button.title = `${name === 'dataset' ? 'データセット' : '解析条件'}を${collapsed ? '展開' : '折り畳む'}`;
+    button.querySelector(':scope > b').textContent = name === 'dataset' ? (collapsed ? '›' : '‹') : (collapsed ? '‹' : '›');
+    requestAnimationFrame(drawChart);
+  }
+
+  function openApplyParamsDialog() {
+    const source = active(); if (!source || state.datasets.length < 2) return;
+    $('apply-params-source').textContent = source.name;
+    $('apply-targets').innerHTML = state.datasets.filter(d => d.id !== source.id).map(d => `<label><input type="checkbox" value="${d.id}" checked><span class="dataset-color" style="background:${d.color}"></span><span><b>${escapeHtml(d.name)}</b><small>${d.parsed.rows.length.toLocaleString()} points</small></span></label>`).join('');
+    $('apply-params-confirm').disabled = false;
+    $('copy-e0').checked = false;
+    $('apply-params-dialog').showModal();
+  }
+
+  function applyParamsToDatasets() {
+    const source = active(); if (!source) return;
+    const targetIds = new Set(Array.from($('apply-targets').querySelectorAll('input:checked'), el => el.value));
+    if (!targetIds.size) return;
+    const copyE0 = $('copy-e0').checked; let failures = 0;
+    state.datasets.filter(d => targetIds.has(d.id)).forEach(d => {
+      const e0 = d.params.e0;
+      d.params = { ...source.params };
+      if (!copyE0) d.params.e0 = e0;
+      runAnalysis(d); if (d.error) failures++;
+    });
+    $('apply-params-dialog').close(); renderDatasets(); syncControls(); updateAll();
+    setMessage(failures ? `${targetIds.size}件に適用 · ${failures}件は解析範囲を確認してください` : `${targetIds.size}件のデータに解析条件を適用しました`, failures > 0);
+  }
+
   $('file-input').addEventListener('change',e=>{loadFiles(e.target.files);e.target.value=''}); $('drop-input').addEventListener('change',e=>{loadFiles(e.target.files);e.target.value=''});
   ['dragenter','dragover'].forEach(type=>$('dropzone').addEventListener(type,e=>{e.preventDefault();$('dropzone').classList.add('drag')})); ['dragleave','drop'].forEach(type=>$('dropzone').addEventListener(type,e=>{$('dropzone').classList.remove('drag');if(type==='drop'){e.preventDefault();loadFiles(e.dataTransfer.files)}}));
   $('sample-button').onclick=$('empty-sample').onclick=loadSample; $('signal-mode').onchange=updateMappingMode; $('mapping-apply').onclick=applyMapping; $('import-cancel').onclick=$('import-skip').onclick=skipImport;
@@ -249,7 +285,11 @@
   $('e0').addEventListener('change',()=>{const d=active();if(!d)return;d.params.e0=+$('e0').value;runActive()});
   $('detect-e0').onclick=()=>{const d=active();if(!d)return;d.params.e0=C.detectE0(d.energy,d.mu);syncControls();runActive()};
   $('reset-params').onclick=()=>{const d=active();if(!d)return;d.params={...C.DEFAULTS,e0:C.detectE0(d.energy,d.mu)};syncControls();runActive()};
-  document.querySelectorAll('.section-toggle').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'));
+  $('dataset-panel-toggle').onclick=()=>toggleSidePanel('dataset'); $('controls-panel-toggle').onclick=()=>toggleSidePanel('controls');
+  $('apply-params').onclick=openApplyParamsDialog; $('apply-params-close').onclick=$('apply-params-cancel').onclick=()=>$('apply-params-dialog').close(); $('apply-params-confirm').onclick=applyParamsToDatasets;
+  $('apply-targets').addEventListener('change',()=>{$('apply-params-confirm').disabled=!$('apply-targets').querySelector('input:checked')});
+  $('apply-params-dialog').addEventListener('cancel',e=>{e.preventDefault();$('apply-params-dialog').close()});
+  document.querySelectorAll('.section-toggle').forEach(b=>b.onclick=()=>{const open=b.parentElement.classList.toggle('open');b.setAttribute('aria-expanded',String(open))});
   document.querySelectorAll('.plot-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.plot-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.view=b.dataset.view;state.zoom=null;updateAll()});
   $('analysis-points-button').onclick=()=>{state.analysisPoints=!state.analysisPoints;$('analysis-points-button').classList.toggle('active',state.analysisPoints);updateAll()};
   $('overlay-button').onclick=()=>{state.overlays=!state.overlays;$('overlay-button').classList.toggle('active',state.overlays);drawChart()}; $('reset-zoom').onclick=()=>{state.zoom=null;drawChart()}; $('export-button').onclick=exportData;
