@@ -3,7 +3,7 @@
   const C = window.XASCore;
   const colors = ['#42d8e7', '#e5a84d', '#9d8cff', '#69d59b', '#ef789d'];
   const $ = id => document.getElementById(id);
-  const state = { datasets: [], activeId: null, view: 'energy', overlays: true, zoom: null, drag: null, importQueue: [], pendingImport: null };
+  const state = { datasets: [], activeId: null, view: 'energy', overlays: true, analysisPoints: false, zoom: null, drag: null, datasetDragId: null, importQueue: [], pendingImport: null };
   const paramIds = ['pre-min','pre-max','norm-min','norm-max','norm-order','flatten','rbkg','bg-kweight','spline-min','spline-max','k-min','k-max','dk','plot-kweight','window','show-window'];
   const keyMap = { 'pre-min':'preMin','pre-max':'preMax','norm-min':'normMin','norm-max':'normMax','norm-order':'normOrder','flatten':'flatten','rbkg':'rbkg','bg-kweight':'bgKweight','spline-min':'splineMin','spline-max':'splineMax','k-min':'kMin','k-max':'kMax','dk':'dk','plot-kweight':'plotKweight','window':'window','show-window':'showWindow' };
 
@@ -60,14 +60,38 @@
 
   function renderDatasets() {
     $('dataset-count').textContent = `${state.datasets.length} DATASET${state.datasets.length === 1 ? '' : 'S'}`;
-    $('dataset-list').innerHTML = state.datasets.map(d => `<div class="dataset-item ${d.id === state.activeId ? 'active' : ''}" role="option" aria-selected="${d.id === state.activeId}" data-id="${d.id}"><span class="dataset-color" style="background:${d.color}"></span><div class="dataset-copy"><strong>${escapeHtml(d.name)}</strong><small>${d.parsed.rows.length.toLocaleString()} points · ${d.error ? 'CHECK RANGE' : 'READY'}</small></div><div class="dataset-actions"><button data-action="toggle" title="表示切替">${d.visible ? '◉' : '○'}</button><button data-action="remove" title="削除">×</button></div></div>`).join('');
-    $('dataset-list').querySelectorAll('.dataset-item').forEach(el => el.addEventListener('click', e => {
-      const action = e.target.dataset.action, d = state.datasets.find(x => x.id === el.dataset.id);
-      if (action === 'remove') { state.datasets = state.datasets.filter(x => x.id !== d.id); if (state.activeId === d.id) state.activeId = state.datasets[0]?.id || null; }
-      else if (action === 'toggle') d.visible = !d.visible;
-      else state.activeId = d.id;
-      renderDatasets(); syncControls(); updateAll();
-    }));
+    $('dataset-list').innerHTML = state.datasets.map(d => `<div class="dataset-item ${d.id === state.activeId ? 'active' : ''}" role="option" aria-selected="${d.id === state.activeId}" data-id="${d.id}" draggable="true"><span class="dataset-handle" aria-hidden="true" title="ドラッグして並べ替え">⠿</span><span class="dataset-color" style="background:${d.color}"></span><div class="dataset-copy"><strong>${escapeHtml(d.name)}</strong><small>${d.parsed.rows.length.toLocaleString()} points · ${d.error ? 'CHECK RANGE' : 'READY'}</small></div><div class="dataset-actions"><button data-action="toggle" title="表示切替">${d.visible ? '◉' : '○'}</button><button data-action="remove" title="削除">×</button></div></div>`).join('');
+    $('dataset-list').querySelectorAll('.dataset-item').forEach(el => {
+      el.addEventListener('click', e => {
+        const action = e.target.dataset.action, d = state.datasets.find(x => x.id === el.dataset.id);
+        if (action === 'remove') { state.datasets = state.datasets.filter(x => x.id !== d.id); if (state.activeId === d.id) state.activeId = state.datasets[0]?.id || null; }
+        else if (action === 'toggle') d.visible = !d.visible;
+        else state.activeId = d.id;
+        renderDatasets(); syncControls(); updateAll();
+      });
+      el.addEventListener('dragstart', e => {
+        state.datasetDragId = el.dataset.id; el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', el.dataset.id);
+      });
+      el.addEventListener('dragover', e => {
+        if (!state.datasetDragId || state.datasetDragId === el.dataset.id) return;
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        const after = e.clientY > el.getBoundingClientRect().top + el.offsetHeight / 2;
+        $('dataset-list').querySelectorAll('.dataset-item').forEach(item => item.classList.remove('drag-before', 'drag-after'));
+        el.classList.add(after ? 'drag-after' : 'drag-before'); el.dataset.dropAfter = after ? '1' : '0';
+      });
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        const dragged = state.datasets.find(d => d.id === state.datasetDragId);
+        if (!dragged || dragged.id === el.dataset.id) return;
+        state.datasets = state.datasets.filter(d => d.id !== dragged.id);
+        let targetIndex = state.datasets.findIndex(d => d.id === el.dataset.id);
+        if (el.dataset.dropAfter === '1') targetIndex++;
+        state.datasets.splice(targetIndex, 0, dragged); state.datasetDragId = null;
+        renderDatasets(); drawChart();
+      });
+      el.addEventListener('dragend', () => { state.datasetDragId = null; renderDatasets(); });
+    });
   }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -109,6 +133,8 @@
   function updateAll() {
     const d = active(), has = !!d;
     $('empty-state').hidden = has; $('chart').hidden = !has; $('project-title').textContent = d ? d.name : 'Untitled analysis';
+    $('analysis-points-button').disabled = !has || state.view !== 'energy';
+    $('plot-hint').textContent = state.analysisPoints && state.view === 'energy' ? '解析点を横にドラッグして範囲変更 · 余白ドラッグで移動' : 'ホイールで拡大 · ドラッグで移動';
     if (has) {
       $('metric-e0').textContent = d.analysis ? d.analysis.e0.toFixed(2) : 'ERR';
       $('metric-step').textContent = d.analysis ? d.analysis.edgeStep.toFixed(4) : 'ERR';
@@ -141,6 +167,45 @@
   }
   function labels() { return { energy:['Energy (eV)','μ(E) (a.u.)'], normalized:['Energy (eV)','Normalized μ(E)'], k:['k (Å⁻¹)',`k${active()?.params.plotKweight || 0} χ(k) (Å⁻${active()?.params.plotKweight || 0})`], r:['R (Å)','|χ(R)| (a.u.)'] }[state.view]; }
 
+  function interpolateAt(x, xs, ys) {
+    if (x <= xs[0]) return ys[0]; if (x >= xs.at(-1)) return ys.at(-1);
+    let lo = 0, hi = xs.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (xs[mid] <= x) lo = mid; else hi = mid; }
+    return ys[lo] + (ys[hi] - ys[lo]) * (x - xs[lo]) / (xs[hi] - xs[lo]);
+  }
+  function analysisMarkers(d) {
+    if (!state.analysisPoints || state.view !== 'energy' || !d?.analysis) return [];
+    const a = d.analysis, e0 = a.e0, marker = (key, label, x, color) => ({ key, label, x, y: interpolateAt(x, a.energy, a.mu), color });
+    return [
+      marker('preMin', 'PRE MIN', e0 + d.params.preMin, '#69d59b'),
+      marker('preMax', 'PRE MAX', e0 + d.params.preMax, '#69d59b'),
+      marker('e0', 'E₀', e0, '#42d8e7'),
+      marker('normMin', 'POST MIN', e0 + d.params.normMin, '#e5a84d'),
+      marker('normMax', 'POST MAX', e0 + d.params.normMax, '#e5a84d')
+    ];
+  }
+  function moveAnalysisMarker(key, x) {
+    const d = active(); if (!d?.analysis) return;
+    const a = d.analysis, values = a.energy, span = values.at(-1) - values[0];
+    let lo = 0, hi = values.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (values[mid] <= x) lo = mid; else hi = mid; }
+    x = Math.abs(values[lo] - x) <= Math.abs(values[hi] - x) ? values[lo] : values[hi];
+    const spacing = Math.max(span / Math.max(1, values.length - 1), span / 10000, 1e-6);
+    const clamp = (value, lo, hi) => Math.max(lo, Math.min(hi, value));
+    const previous = d.params[key], previousAnalysis = d.analysis, previousError = d.error;
+    if (key === 'e0') d.params.e0 = clamp(x, values[0] + spacing, values.at(-1) - spacing);
+    else {
+      const offset = x - a.e0;
+      if (key === 'preMin') d.params.preMin = clamp(offset, values[0] - a.e0 - spacing, d.params.preMax - spacing);
+      if (key === 'preMax') d.params.preMax = clamp(offset, d.params.preMin + spacing, -spacing);
+      if (key === 'normMin') d.params.normMin = clamp(offset, spacing, d.params.normMax - spacing);
+      if (key === 'normMax') d.params.normMax = clamp(offset, d.params.normMin + spacing, values.at(-1) - a.e0 + spacing);
+    }
+    runAnalysis(d);
+    if (d.error) { d.params[key] = previous; d.analysis = previousAnalysis; d.error = previousError; }
+    syncControls(); updateAll();
+  }
+
   function drawChart() {
     const svg = $('chart'), rect = svg.getBoundingClientRect(); if (!rect.width || !rect.height || !active()) return;
     const series = state.datasets.filter(d => d.visible).flatMap(seriesFor); if (!series.length) { svg.innerHTML=''; $('chart-legend').innerHTML=''; return; }
@@ -156,7 +221,13 @@
     const [xl,yl]=labels(); html+=`<text x="${m.l+pw/2}" y="${H-7}" fill="#83969c" font-size="9" text-anchor="middle" font-family="DM Mono">${xl}</text><text transform="translate(13 ${m.t+ph/2}) rotate(-90)" fill="#83969c" font-size="9" text-anchor="middle" font-family="DM Mono">${yl}</text>`;
     series.forEach(s=>{let path='';const stride=Math.max(1,Math.floor(s.x.length/(W*1.5)));for(let i=0;i<s.x.length;i+=stride){if(!Number.isFinite(s.y[i]))continue;path+=`${path?'L':'M'}${X(s.x[i]).toFixed(1)},${Y(s.y[i]).toFixed(1)}`;}html+=`<path d="${path}" fill="none" stroke="${s.color}" stroke-width="${s.width}" stroke-dasharray="${s.dash||''}" vector-effect="non-scaling-stroke" clip-path="url(#plotclip)"/>`;});
     if(state.view==='energy'&&state.overlays&&active()?.analysis){const x=X(active().analysis.e0);html+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${m.t+ph}" stroke="#42d8e7" stroke-dasharray="3 4" opacity=".8"/><text x="${x+5}" y="${m.t+13}" fill="#42d8e7" font-size="8" font-family="DM Mono">E₀ ${active().analysis.e0.toFixed(1)} eV</text>`;}
-    html+=`<rect data-hit="1" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="transparent" style="cursor:crosshair"/>`; svg.innerHTML=html; svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg._scale={xmin,xmax,ymin,ymax,m,pw,ph,X,Y,series};
+    html+=`<rect data-hit="1" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="transparent" style="cursor:crosshair"/>`;
+    analysisMarkers(active()).forEach((marker, index) => {
+      const x = X(marker.x), y = Y(marker.y); if (x < m.l || x > m.l + pw || y < m.t || y > m.t + ph) return;
+      const anchor = index < 2 ? 'end' : index > 2 ? 'start' : 'middle', tx = x + (index < 2 ? -8 : index > 2 ? 8 : 0);
+      html += `<g data-marker="${marker.key}" style="cursor:ew-resize"><line x1="${x}" y1="${y}" x2="${x}" y2="${m.t+ph}" stroke="${marker.color}" stroke-dasharray="2 4" opacity=".45" pointer-events="none"/><circle cx="${x}" cy="${y}" r="10" fill="transparent"/><circle cx="${x}" cy="${y}" r="5" fill="#091317" stroke="${marker.color}" stroke-width="2" pointer-events="none"/><text x="${tx}" y="${y-10}" fill="${marker.color}" font-size="7" text-anchor="${anchor}" font-family="DM Mono" pointer-events="none">${marker.label}</text></g>`;
+    });
+    svg.innerHTML=html; svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg._scale={xmin,xmax,ymin,ymax,m,pw,ph,X,Y,series};
     const unique=[]; series.forEach(s=>{if(!unique.some(u=>u.name===s.name))unique.push(s)}); $('chart-legend').innerHTML=unique.slice(0,5).map(s=>`<span class="legend-item"><i class="legend-swatch" style="background:${s.color}"></i>${escapeHtml(s.name)}</span>`).join('');
   }
 
@@ -179,11 +250,12 @@
   $('detect-e0').onclick=()=>{const d=active();if(!d)return;d.params.e0=C.detectE0(d.energy,d.mu);syncControls();runActive()};
   $('reset-params').onclick=()=>{const d=active();if(!d)return;d.params={...C.DEFAULTS,e0:C.detectE0(d.energy,d.mu)};syncControls();runActive()};
   document.querySelectorAll('.section-toggle').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'));
-  document.querySelectorAll('.plot-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.plot-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.view=b.dataset.view;state.zoom=null;drawChart()});
+  document.querySelectorAll('.plot-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.plot-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.view=b.dataset.view;state.zoom=null;updateAll()});
+  $('analysis-points-button').onclick=()=>{state.analysisPoints=!state.analysisPoints;$('analysis-points-button').classList.toggle('active',state.analysisPoints);updateAll()};
   $('overlay-button').onclick=()=>{state.overlays=!state.overlays;$('overlay-button').classList.toggle('active',state.overlays);drawChart()}; $('reset-zoom').onclick=()=>{state.zoom=null;drawChart()}; $('export-button').onclick=exportData;
   $('guide-button').onclick=()=>$('guide-dialog').showModal(); $('guide-close').onclick=()=>$('guide-dialog').close();
-  $('chart').addEventListener('pointermove',e=>{const p=chartPoint(e);if(!p)return;$('cursor-x').textContent=`${labels()[0].split(' ')[0]} ${p.x.toFixed(state.view==='energy'?1:2)}`;$('cursor-y').textContent=p.y.toPrecision(4);if(state.drag){const dx=p.px-state.drag.px,dy=p.py-state.drag.py,s=p.s;state.zoom={xmin:state.drag.zoom.xmin-dx/s.pw*(state.drag.zoom.xmax-state.drag.zoom.xmin),xmax:state.drag.zoom.xmax-dx/s.pw*(state.drag.zoom.xmax-state.drag.zoom.xmin),ymin:state.drag.zoom.ymin+dy/s.ph*(state.drag.zoom.ymax-state.drag.zoom.ymin),ymax:state.drag.zoom.ymax+dy/s.ph*(state.drag.zoom.ymax-state.drag.zoom.ymin)};drawChart();}});
-  $('chart').addEventListener('pointerdown',e=>{const p=chartPoint(e);if(!p)return;state.drag={px:p.px,py:p.py,zoom:{xmin:p.s.xmin,xmax:p.s.xmax,ymin:p.s.ymin,ymax:p.s.ymax}};$('chart').setPointerCapture(e.pointerId)}); window.addEventListener('pointerup',()=>state.drag=null);
+  $('chart').addEventListener('pointermove',e=>{const p=chartPoint(e);if(!p)return;$('cursor-x').textContent=`${labels()[0].split(' ')[0]} ${p.x.toFixed(state.view==='energy'?1:2)}`;$('cursor-y').textContent=p.y.toPrecision(4);if(state.drag?.type==='marker'){moveAnalysisMarker(state.drag.key,p.x);return;}if(state.drag?.type==='pan'){const dx=p.px-state.drag.px,dy=p.py-state.drag.py,s=p.s;state.zoom={xmin:state.drag.zoom.xmin-dx/s.pw*(state.drag.zoom.xmax-state.drag.zoom.xmin),xmax:state.drag.zoom.xmax-dx/s.pw*(state.drag.zoom.xmax-state.drag.zoom.xmin),ymin:state.drag.zoom.ymin+dy/s.ph*(state.drag.zoom.ymax-state.drag.zoom.ymin),ymax:state.drag.zoom.ymax+dy/s.ph*(state.drag.zoom.ymax-state.drag.zoom.ymin)};drawChart();}});
+  $('chart').addEventListener('pointerdown',e=>{const p=chartPoint(e);if(!p)return;const marker=e.target.closest('[data-marker]');state.drag=marker?{type:'marker',key:marker.dataset.marker}:{type:'pan',px:p.px,py:p.py,zoom:{xmin:p.s.xmin,xmax:p.s.xmax,ymin:p.s.ymin,ymax:p.s.ymax}};$('chart').setPointerCapture(e.pointerId)}); window.addEventListener('pointerup',()=>state.drag=null);
   $('chart').addEventListener('wheel',e=>{e.preventDefault();const p=chartPoint(e);if(!p)return;const f=e.deltaY>0?1.16:.86;state.zoom={xmin:p.x+(p.s.xmin-p.x)*f,xmax:p.x+(p.s.xmax-p.x)*f,ymin:p.y+(p.s.ymin-p.y)*f,ymax:p.y+(p.s.ymax-p.y)*f};drawChart()},{passive:false});
   window.addEventListener('resize',drawChart); renderDatasets(); syncControls(); updateAll();
 })();

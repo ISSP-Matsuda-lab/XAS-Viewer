@@ -52,6 +52,7 @@
             <button class="plot-tab" data-view="r" type="button"><span>R</span> |χ(R)|</button>
           </div>
           <div class="plot-actions">
+            <button class="mini-button" id="analysis-points-button" type="button" title="E₀と解析範囲の点を表示">解析点</button>
             <button class="mini-button active" id="overlay-button" type="button" title="補助線を表示">補助線</button>
             <button class="mini-button" id="reset-zoom" type="button">表示を戻す</button>
           </div>
@@ -72,7 +73,7 @@
         <div class="plot-footer">
           <div class="readout"><span>CURSOR</span><b id="cursor-x">—</b><small id="cursor-y">—</small></div>
           <div class="analysis-state"><span class="state-dot"></span><span id="analysis-message">データを待っています</span></div>
-          <div class="plot-hint">ホイールで拡大 · ドラッグで移動</div>
+          <div class="plot-hint" id="plot-hint">ホイールで拡大 · ドラッグで移動</div>
         </div>
       </section>
 
