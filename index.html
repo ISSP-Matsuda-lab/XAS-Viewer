@@ -47,7 +47,7 @@
       </div>
     </aside>
 
-    <main class="workspace">
+    <main class="workspace metrics-collapsed">
       <section class="plot-panel panel">
         <div class="plot-toolbar">
           <div class="plot-tabs" role="tablist">
@@ -59,7 +59,9 @@
           <div class="plot-actions">
             <button class="mini-button" id="analysis-points-button" type="button" title="E₀と解析範囲の点を表示">解析点</button>
             <button class="mini-button active" id="overlay-button" type="button" title="補助線を表示">補助線</button>
-            <button class="mini-button" id="reset-zoom" type="button">表示を戻す</button>
+            <button class="mini-button" id="legend-toggle-button" type="button">凡例</button>
+            <button class="mini-button" id="plot-layout-button" type="button">レイアウト</button>
+            <button class="mini-button" id="reset-zoom" type="button">オートスケール</button>
           </div>
         </div>
 
@@ -78,11 +80,12 @@
         <div class="plot-footer">
           <div class="readout"><span>CURSOR</span><b id="cursor-x">—</b><small id="cursor-y">—</small></div>
           <div class="analysis-state"><span class="state-dot"></span><span id="analysis-message">データを待っています</span></div>
+          <button class="metrics-toggle" id="metrics-toggle" type="button" aria-expanded="false" aria-controls="metrics-row">指標を表示</button>
           <div class="plot-hint" id="plot-hint">ホイールで拡大 · ドラッグで移動</div>
         </div>
       </section>
 
-      <section class="metrics-row">
+      <section class="metrics-row" id="metrics-row">
         <article class="metric panel"><span>EDGE ENERGY / E₀</span><strong id="metric-e0">—</strong><small>eV</small><i class="cyan"></i></article>
         <article class="metric panel"><span>EDGE STEP / Δμ</span><strong id="metric-step">—</strong><small>a.u.</small><i class="amber"></i></article>
         <article class="metric panel"><span>AVAILABLE k RANGE</span><strong id="metric-k">—</strong><small>Å⁻¹</small><i class="violet"></i></article>
@@ -95,7 +98,7 @@
         <button class="panel-title-button" id="controls-panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel-content" title="解析条件を折り畳む">
           <b aria-hidden="true">›</b><span><span class="eyebrow">02 / PROCESS</span><strong>解析条件</strong></span>
         </button>
-        <div class="control-heading-actions"><button id="apply-params" class="text-button" type="button">他へ適用</button><button id="reset-params" class="text-button" type="button">初期値</button></div>
+        <div class="control-heading-actions"><button id="save-params" class="text-button" type="button">条件保存</button><button id="load-params" class="text-button" type="button">条件読込</button><button id="reset-params" class="text-button" type="button">初期値</button></div>
       </div>
       <div class="panel-content" id="controls-panel-content">
       <div class="control-scroll">
@@ -196,14 +199,57 @@
     <p>本アプリは教育・予備解析向けです。精密解析では Athena / Larch 等との結果照合を推奨します。</p>
   </dialog>
 
-  <dialog id="apply-params-dialog" class="apply-params-dialog">
-    <button class="dialog-close" id="apply-params-close" type="button" aria-label="閉じる">×</button>
-    <span class="eyebrow">COPY ANALYSIS PARAMETERS</span>
-    <h2>解析条件を他のデータへ適用</h2>
-    <p class="apply-params-description"><b id="apply-params-source"></b> の解析条件を適用するデータを選択してください。</p>
-    <div class="apply-targets" id="apply-targets"></div>
-    <label class="copy-e0-row"><input id="copy-e0" type="checkbox"><span><b>E₀もコピーする</b><small>オフの場合、各データで検出済みの E₀ を維持します</small></span></label>
-    <div class="apply-dialog-actions"><button id="apply-params-cancel" type="button">キャンセル</button><button id="apply-params-confirm" class="apply-button" type="button">選択したデータへ適用</button></div>
+  <dialog id="preset-dialog" class="preset-dialog">
+    <button class="dialog-close" id="preset-close" type="button" aria-label="閉じる">×</button>
+    <span class="eyebrow">SAVED PARAMETERS</span>
+    <h2>保存した解析条件</h2>
+    <p class="preset-description">保存済みの条件を現在選択しているデータセットへ適用します。</p>
+    <div id="preset-list" class="preset-list"></div>
+    <p id="preset-empty" class="preset-empty" hidden>保存済みの解析条件はまだありません。</p>
+  </dialog>
+
+  <dialog id="legend-edit-dialog" class="legend-edit-dialog">
+    <form id="legend-edit-form" method="dialog">
+      <button class="dialog-close" id="legend-edit-close" type="button" aria-label="閉じる">×</button>
+      <span class="eyebrow">LEGEND ITEM</span>
+      <h2>凡例を編集</h2>
+      <div class="legend-edit-fields">
+        <label for="legend-item-name">名前<input id="legend-item-name" type="text" required></label>
+        <label for="legend-item-font-size">文字サイズ<input id="legend-item-font-size" type="number" min="8" max="32" step="1" required></label>
+      </div>
+      <div class="dialog-actions"><span class="dialog-spacer"></span><button type="button" value="cancel">キャンセル</button><button class="primary" type="submit">適用</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="plot-layout-dialog" class="plot-layout-dialog">
+    <form id="plot-layout-form" method="dialog">
+      <button class="dialog-close" id="plot-layout-close" type="button" aria-label="閉じる">×</button>
+      <span class="eyebrow">PLOT LAYOUT</span>
+      <h2>グラフレイアウト</h2>
+      <p class="plot-layout-description">編集するデータを選び、表示順や線、マーカー、オフセットを調整します。</p>
+      <div id="plot-layout-empty" class="dialog-error" hidden>データセットを読み込んでください。</div>
+      <div id="plot-layout-body" class="plot-layout-body">
+        <section class="plot-series-pane" aria-label="データセットと表示順">
+          <div class="plot-series-head"><strong>データセット</strong><span id="plot-selection-count">0 selected</span></div>
+          <div class="plot-series-actions"><button id="plot-select-all" type="button">全選択</button><button id="plot-select-none" type="button">解除</button></div>
+          <div id="plot-series-list" class="plot-series-list"></div>
+        </section>
+        <div id="plot-layout-controls" class="plot-layout-controls">
+          <label for="plot-render-mode">表示形式<select id="plot-render-mode"><option value="line">線</option><option value="line-markers">線 + 点</option><option value="markers">点のみ</option></select></label>
+          <label for="plot-line-style">線種<select id="plot-line-style"><option value="solid">実線</option><option value="dashed">破線</option></select></label>
+          <label for="plot-line-width">線幅<input id="plot-line-width" type="number" min="0.25" max="12" step="0.25" required></label>
+          <label for="plot-marker-shape">マーカー<select id="plot-marker-shape"><option value="circle">円</option><option value="square">四角</option><option value="diamond">ひし形</option><option value="triangle">三角</option><option value="cross">クロス</option></select></label>
+          <div class="plot-color-control"><label for="plot-color">色<input id="plot-color" type="color"></label><div id="plot-color-presets" class="plot-color-presets" aria-label="プリセット色"><button type="button" data-color="#6EB72D" aria-label="Green"></button><button type="button" data-color="#65508E" aria-label="Purple"></button><button type="button" data-color="#c39b45" aria-label="Amber"></button><button type="button" data-color="#4a9c9c" aria-label="Teal"></button><button type="button" data-color="#c8667c" aria-label="Rose"></button><button type="button" data-color="#b6a6d0" aria-label="Lavender"></button></div></div>
+          <label for="plot-x-offset">X オフセット<input id="plot-x-offset" type="number" step="any" required></label>
+          <label for="plot-y-offset">Y オフセット<input id="plot-y-offset" type="number" step="any" required></label>
+          <label for="plot-marker-size">点サイズ<input id="plot-marker-size" type="number" min="1" max="20" step="0.5" required></label>
+          <label for="plot-marker-stroke-width">点の線幅<input id="plot-marker-stroke-width" type="number" min="0" max="10" step="0.25" required></label>
+          <label class="marker-fill-option"><input id="plot-marker-filled" type="checkbox"> 塗りつぶす</label>
+          <label class="marker-fill-option"><input id="plot-hidden" type="checkbox"> グラフで非表示</label>
+        </div>
+      </div>
+      <div class="dialog-actions plot-layout-actions"><button id="plot-style-reset" type="button">初期値</button><span class="dialog-spacer"></span><button type="button" value="cancel">キャンセル</button><button class="primary" type="submit">適用</button></div>
+    </form>
   </dialog>
 
   <script src="src/xas-core.js"></script>
