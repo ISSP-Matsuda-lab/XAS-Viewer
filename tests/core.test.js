@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const core = require('../xas-core.js');
+const core = require('../src/xas-core.js');
 
 test('parses commented column headers and numeric rows', () => {
   const parsed = core.parseText('# energy mu\n8970 0.1\n8971 0.2\n8972 0.3');
