@@ -5,6 +5,8 @@
   const colors = [palette.accent, palette.primary, '#c39b45', '#4a9c9c', '#c8667c'];
   const $ = id => document.getElementById(id);
   const PRESET_STORAGE_KEY = 'xas-workbench-analysis-presets';
+  const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+  const MAX_IMPORT_ROWS = 200000;
   const state = { datasets: [], activeId: null, view: 'energy', overlays: true, analysisPoints: false, zoom: null, drag: null, datasetDragId: null, importQueue: [], pendingImport: null, legendVisible: false, legendEntries: {}, editingLegendId: null };
   const layoutSelection = new Set(), layoutDirty = new Set();
   let layoutResetDefaults = false;
@@ -71,10 +73,25 @@
     catch (err) { d.analysis = null; d.error = err.message; }
   }
   function runActive() { const d = active(); if (!d) return; runAnalysis(d); updateAll(); }
+  function formatBytes(bytes) {
+    if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
 
   async function loadFiles(files) {
     for (const file of files) {
-      try { state.importQueue.push({ name: file.name, parsed: C.parseText(await file.text()) }); }
+      if (file.size > MAX_IMPORT_BYTES) {
+        setMessage(`${file.name}: file is ${formatBytes(file.size)}. The browser importer supports files up to ${formatBytes(MAX_IMPORT_BYTES)}.`, true);
+        continue;
+      }
+      try {
+        const parsed = C.parseText(await file.text());
+        if (parsed.rows.length > MAX_IMPORT_ROWS) {
+          setMessage(`${file.name}: ${parsed.rows.length.toLocaleString()} rows exceeds the ${MAX_IMPORT_ROWS.toLocaleString()} row browser limit.`, true);
+          continue;
+        }
+        state.importQueue.push({ name: file.name, parsed });
+      }
       catch (err) { setMessage(`${file.name}: ${err.message}`, true); }
     }
     showNextImport();
