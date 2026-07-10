@@ -41,6 +41,8 @@ Do not commit private measurement files. Keep real datasets outside Git, or plac
 
 The UI uses local system font fallbacks and does not depend on external font requests.
 
+Vercel Web Analytics is included with the plain HTML script at `/_vercel/insights/script.js`. Enable Web Analytics in the Vercel project dashboard for page views to appear.
+
 ## Browser Limits
 
 Analysis runs entirely in the user's browser. To avoid freezing low-memory devices, the importer rejects files larger than 25 MB or parsed datasets above 200,000 rows.
