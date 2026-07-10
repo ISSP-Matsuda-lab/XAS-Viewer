@@ -33,7 +33,7 @@
   function defaultMapping(parsed) {
     const names = parsed.columns.map(v => v.toLowerCase());
     const energy = Math.max(0, names.findIndex(v => /energy|energ|mono|e_ev/.test(v)));
-    let mu = names.findIndex(v => /(^|_)mu|xmu|absorp/.test(v)); if (mu < 0) mu = parsed.columns.length > 1 ? 1 : 0;
+    let mu = parsed.columns.length > 7 ? 7 : names.findIndex(v => /(^|_)mu|xmu|absorp/.test(v)); if (mu < 0) mu = parsed.columns.length > 1 ? 1 : 0;
     const i0 = names.findIndex(v => /^i0\b|^i_0\b|incident/.test(v));
     const i1 = names.findIndex(v => /^(i1|i_1|is)\b|transmitted|transmission/.test(v));
     const numerator = parsed.columns.length > 6 ? 6 : (i0 >= 0 ? i0 : 1);
@@ -83,7 +83,7 @@
 
   function renderDatasets() {
     $('dataset-count').textContent = `${state.datasets.length} DATASET${state.datasets.length === 1 ? '' : 'S'}`;
-    $('dataset-list').innerHTML = state.datasets.map(d => `<div class="dataset-item ${d.id === state.activeId ? 'active' : ''} ${d.visible ? '' : 'off'}" role="option" aria-selected="${d.id === state.activeId}" data-id="${d.id}" draggable="true" title="左クリックで選択 · 右クリックで表示/非表示"><span class="dataset-handle" aria-hidden="true" title="ドラッグして並べ替え">⠿</span><span class="dataset-color" style="background:${d.color}"></span><div class="dataset-copy"><strong>${escapeHtml(d.name)}</strong><small>${d.parsed.rows.length.toLocaleString()} points · ${d.visible ? 'VISIBLE' : 'HIDDEN'} · ${d.error ? 'CHECK RANGE' : 'READY'}</small></div><div class="dataset-actions"><button data-action="remove" title="削除">×</button></div></div>`).join('');
+    $('dataset-list').innerHTML = state.datasets.map(d => `<div class="dataset-item ${d.id === state.activeId ? 'active' : ''} ${d.visible ? '' : 'off'}" role="option" aria-selected="${d.id === state.activeId}" data-id="${d.id}" draggable="true" title="Left-click to select · Right-click to show/hide"><span class="dataset-handle" aria-hidden="true" title="Drag to reorder">⠿</span><span class="dataset-color" style="background:${d.color}"></span><div class="dataset-copy"><strong>${escapeHtml(d.name)}</strong><small>${d.parsed.rows.length.toLocaleString()} points · ${d.visible ? 'VISIBLE' : 'HIDDEN'} · ${d.error ? 'CHECK RANGE' : 'READY'}</small></div><div class="dataset-actions"><button data-action="remove" title="Remove">×</button></div></div>`).join('');
     $('dataset-list').querySelectorAll('.dataset-item').forEach(el => {
       el.addEventListener('click', e => {
         const action = e.target.dataset.action, d = state.datasets.find(x => x.id === el.dataset.id);
@@ -97,7 +97,7 @@
         const d = state.datasets.find(x => x.id === el.dataset.id); if (!d) return;
         d.visible = !d.visible;
         renderDatasets(); syncControls(); updateAll();
-        setMessage(`${d.name}: ${d.visible ? '表示' : '非表示'}にしました`);
+        setMessage(`${d.name}: ${d.visible ? 'shown' : 'hidden'}`);
       });
       el.addEventListener('dragstart', e => {
         state.datasetDragId = el.dataset.id; el.classList.add('dragging');
@@ -146,9 +146,9 @@
   }
   function applyMapping() {
     const pending=state.pendingImport; if(!pending)return; const mapping=currentMapping();
-    if(mapping.mode==='transmission'&&mapping.numerator===mapping.denominator){$('import-error').textContent='分子と分母には異なる列を選択してください。';$('import-error').hidden=false;return;}
+    if(mapping.mode==='transmission'&&mapping.numerator===mapping.denominator){$('import-error').textContent='Select different columns for the numerator and denominator.';$('import-error').hidden=false;return;}
     const energy=pending.parsed.rows.map(r=>r[mapping.energy]), mu=pending.parsed.rows.map(r=>mapping.mode==='transmission'?Math.log(r[mapping.numerator]/r[mapping.denominator]):r[mapping.mu]);
-    if(energy.some(v=>!Number.isFinite(v))||mu.some(v=>!Number.isFinite(v))){$('import-error').textContent='選択した列から有限の数値を計算できません。0以下の分子・分母が含まれていないか確認してください。';$('import-error').hidden=false;return;}
+    if(energy.some(v=>!Number.isFinite(v))||mu.some(v=>!Number.isFinite(v))){$('import-error').textContent='The selected columns cannot produce finite values. Check whether the numerator or denominator contains values less than or equal to zero.';$('import-error').hidden=false;return;}
     $('import-dialog').close(); state.pendingImport=null; state.view='energy'; state.zoom=null; document.querySelectorAll('.plot-tab').forEach(b=>b.classList.toggle('active',b.dataset.view==='energy')); addDataset(pending.name,pending.parsed,mapping); showNextImport();
   }
   function skipImport(){if(!$('import-dialog').open)return;$('import-dialog').close();state.pendingImport=null;showNextImport();}
@@ -165,16 +165,16 @@
     const d = active(), has = !!d;
     $('empty-state').hidden = has; $('chart').hidden = !has; $('project-title').textContent = d ? d.name : 'Untitled analysis';
     $('analysis-points-button').disabled = !has || state.view !== 'energy';
-    $('plot-hint').textContent = state.analysisPoints && state.view === 'energy' ? '解析点ドラッグで範囲変更 · グラフドラッグで拡大' : 'ドラッグ範囲で拡大 · ダブルクリックでリセット';
+    $('plot-hint').textContent = state.analysisPoints && state.view === 'energy' ? 'Drag analysis points to adjust ranges · Drag the graph to zoom' : 'Drag a region to zoom · Double-click to autoscale';
     if (has) {
       $('metric-e0').textContent = d.analysis ? d.analysis.e0.toFixed(2) : 'ERR';
       $('metric-step').textContent = d.analysis ? d.analysis.edgeStep.toFixed(4) : 'ERR';
       $('metric-k').textContent = d.analysis ? `0–${d.analysis.k.at(-1).toFixed(1)}` : '—';
       $('metric-points').textContent = d.energy.length.toLocaleString();
-      setMessage(d.error || `解析完了 · ${state.datasets.filter(x => x.visible).length}系列を表示`, !!d.error);
+      setMessage(d.error || `Analysis complete · showing ${state.datasets.filter(x => x.visible).length} series`, !!d.error);
       requestAnimationFrame(drawChart);
     } else {
-      ['metric-e0','metric-step','metric-k','metric-points'].forEach(id => $(id).textContent = '—'); setMessage('データを待っています'); $('chart-legend').innerHTML = ''; $('chart-legend').hidden = true;
+      ['metric-e0','metric-step','metric-k','metric-points'].forEach(id => $(id).textContent = '—'); setMessage('Waiting for data'); $('chart-legend').innerHTML = ''; $('chart-legend').hidden = true;
     }
   }
   function setMessage(message, error) { $('analysis-message').textContent = message; document.querySelector('.state-dot').style.background = error ? '#ef789d' : ''; }
@@ -338,7 +338,7 @@
     const collapsed = panel.classList.toggle('collapsed');
     shell.classList.toggle(`${name}-collapsed`, collapsed);
     button.setAttribute('aria-expanded', String(!collapsed));
-    button.title = `${name === 'dataset' ? 'データセット' : '解析条件'}を${collapsed ? '展開' : '折り畳む'}`;
+    button.title = `${collapsed ? 'Expand' : 'Collapse'} ${name === 'dataset' ? 'datasets' : 'analysis settings'}`;
     button.querySelector(':scope > b').textContent = name === 'dataset' ? (collapsed ? '›' : '‹') : (collapsed ? '‹' : '›');
     requestAnimationFrame(drawChart);
   }
@@ -347,8 +347,8 @@
     const workspace = document.querySelector('.workspace'), button = $('metrics-toggle');
     const collapsed = workspace.classList.toggle('metrics-collapsed');
     button.setAttribute('aria-expanded', String(!collapsed));
-    button.textContent = collapsed ? '指標を表示' : '指標を隠す';
-    button.title = collapsed ? '下部の指標を表示' : '下部の指標を折り畳む';
+    button.textContent = collapsed ? 'Show Metrics' : 'Hide Metrics';
+    button.title = collapsed ? 'Show bottom metrics' : 'Collapse bottom metrics';
     requestAnimationFrame(drawChart);
   }
 
@@ -365,7 +365,7 @@
     if (legend.hidden) { legend.innerHTML = ''; return; }
     legend.innerHTML = datasets.map(d => {
       const entry = legendEntry(d);
-      return `<button class="legend-item" data-id="${d.id}" type="button" title="ダブルクリックで編集" style="font-size:${entry.fontSize}px"><i class="legend-swatch" style="background:${d.color}"></i><span>${escapeHtml(entry.name)}</span></button>`;
+      return `<button class="legend-item" data-id="${d.id}" type="button" title="Double-click to edit" style="font-size:${entry.fontSize}px"><i class="legend-swatch" style="background:${d.color}"></i><span>${escapeHtml(entry.name)}</span></button>`;
     }).join('');
   }
   function openLegendEditor(id) {
@@ -386,52 +386,43 @@
     drawChart();
   }
 
-  function readPresets() {
+  function readPreset() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY) || '[]');
-      return Array.isArray(parsed) ? parsed.filter(p => p?.id && p?.params) : [];
+      const parsed = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY) || 'null');
+      if (Array.isArray(parsed)) return parsed.find(p => p?.params) || null;
+      return parsed?.params ? parsed : null;
     } catch {
-      return [];
+      return null;
     }
   }
-  function writePresets(presets) {
-    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets.slice(0, 30)));
+  function writePreset(preset) {
+    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(preset));
   }
   function presetName(d) {
-    const timestamp = new Date().toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const timestamp = new Date().toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     return `${d.name} · ${timestamp}`;
   }
   function saveCurrentParamsPreset() {
     const d = active(); if (!d) return;
     try {
-      const presets = readPresets();
-      presets.unshift({ id: uid(), name: presetName(d), params: { ...d.params }, createdAt: Date.now() });
-      writePresets(presets);
-      setMessage(`解析条件を保存しました · ${presets[0].name}`);
+      const preset = { name: presetName(d), params: { ...d.params }, updatedAt: Date.now() };
+      writePreset(preset);
+      setMessage(`Analysis settings saved · ${preset.name}`);
     } catch (err) {
-      setMessage(`解析条件を保存できませんでした: ${err.message}`, true);
+      setMessage(`Could not save analysis settings: ${err.message}`, true);
     }
   }
-  function renderPresetList() {
-    const presets = readPresets();
-    $('preset-empty').hidden = presets.length > 0;
-    $('preset-list').innerHTML = presets.map(p => `<div class="preset-item" data-id="${p.id}"><div><b>${escapeHtml(p.name)}</b><small>E₀ ${Number(p.params.e0).toFixed(2)} eV · k ${p.params.kMin}–${p.params.kMax}</small></div><button data-action="apply" type="button">適用</button><button data-action="delete" type="button">削除</button></div>`).join('');
-  }
-  function openPresetDialog() {
-    if (!active()) return;
-    renderPresetList();
-    $('preset-dialog').showModal();
-  }
-  function applyPreset(id) {
-    const d = active(), preset = readPresets().find(p => p.id === id); if (!d || !preset) return;
+  function loadSavedParamsPreset() {
+    const d = active(), preset = readPreset();
+    if (!d) return;
+    if (!preset) {
+      setMessage('No saved analysis settings yet', true);
+      return;
+    }
     d.params = { ...C.DEFAULTS, ...preset.params };
     runAnalysis(d);
-    $('preset-dialog').close(); syncControls(); updateAll();
-    setMessage(`${preset.name} を ${d.name} へ適用しました`, !!d.error);
-  }
-  function deletePreset(id) {
-    writePresets(readPresets().filter(p => p.id !== id));
-    renderPresetList();
+    syncControls(); updateAll();
+    setMessage(`Applied ${preset.name} to ${d.name}`, !!d.error);
   }
 
   function colorInputValue(color) { return /^#[0-9a-f]{6}$/i.test(color || '') ? color : colors[0]; }
@@ -533,9 +524,7 @@
   $('plot-style-reset').onclick=()=>{const first=state.datasets.find(d=>layoutSelection.has(d.id));if(!first)return;fillPlotStyleForm({...first,color:colors[state.datasets.indexOf(first)%colors.length],plotStyle:defaultPlotStyle(),visible:true});layoutDirty.clear();layoutResetDefaults=true};
   new Map([[$('plot-render-mode'),'renderMode'],[$('plot-line-style'),'lineStyle'],[$('plot-line-width'),'lineWidth'],[$('plot-color'),'color'],[$('plot-x-offset'),'xOffset'],[$('plot-y-offset'),'yOffset'],[$('plot-marker-size'),'markerSize'],[$('plot-marker-stroke-width'),'markerStrokeWidth'],[$('plot-marker-filled'),'markerFilled'],[$('plot-marker-shape'),'markerShape'],[$('plot-hidden'),'hidden']]).forEach((key,input)=>input.addEventListener('input',()=>layoutDirty.add(key)));
   $('plot-color').addEventListener('input',updateColorPresetSelection); $('plot-color-presets').querySelectorAll('[data-color]').forEach(button=>{button.style.setProperty('--preset-color',button.dataset.color);button.onclick=()=>{$('plot-color').value=button.dataset.color;layoutDirty.add('color');updateColorPresetSelection()}});
-  $('save-params').onclick=saveCurrentParamsPreset; $('load-params').onclick=openPresetDialog; $('preset-close').onclick=()=>$('preset-dialog').close();
-  $('preset-list').addEventListener('click',e=>{const button=e.target.closest('button[data-action]'), item=e.target.closest('.preset-item'); if(!button||!item)return; if(button.dataset.action==='apply')applyPreset(item.dataset.id); else deletePreset(item.dataset.id);});
-  $('preset-dialog').addEventListener('cancel',e=>{e.preventDefault();$('preset-dialog').close()});
+  $('save-params').onclick=saveCurrentParamsPreset; $('load-params').onclick=loadSavedParamsPreset;
   $('legend-toggle-button').onclick=toggleLegend; $('chart-legend').addEventListener('dblclick',e=>{const item=e.target.closest('.legend-item');if(item)openLegendEditor(item.dataset.id)});
   $('legend-edit-close').onclick=()=>$('legend-edit-dialog').close(); $('legend-edit-form').querySelector('[value="cancel"]').onclick=()=>$('legend-edit-dialog').close(); $('legend-edit-form').onsubmit=applyLegendEdit;
   $('legend-edit-dialog').addEventListener('cancel',e=>{e.preventDefault();$('legend-edit-dialog').close()});

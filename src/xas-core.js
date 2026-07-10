@@ -45,7 +45,7 @@
       if (nums.length >= 2 && nums.every(Number.isFinite)) rows.push(nums);
       else if (!header && /[A-Za-z]/.test(line) && parts.length > 1) header = parts;
     }
-    if (rows.length < 3) throw new Error('数値データを3行以上読み取れませんでした。');
+    if (rows.length < 3) throw new Error('Could not read at least three rows of numeric data.');
     const width = Math.min(...rows.map(r => r.length));
     const columns = Array.from({ length: width }, (_, i) => (header && header.length === width ? header[i].trim() : `Column ${i + 1}`));
     return { columns, rows: rows.map(r => r.slice(0, width)) };
@@ -125,17 +125,17 @@
     const p = Object.assign({}, DEFAULTS, params || {});
     const pairs = energyInput.map((e, i) => [e, muInput[i]]).filter(v => Number.isFinite(v[0]) && Number.isFinite(v[1])).sort((a, b) => a[0] - b[0]);
     const energy = pairs.map(v => v[0]), mu = pairs.map(v => v[1]);
-    if (energy.length < 10) throw new Error('解析には10点以上のデータが必要です。');
+    if (energy.length < 10) throw new Error('Analysis requires at least 10 data points.');
     const e0 = Number.isFinite(+p.e0) ? +p.e0 : detectE0(energy, mu);
     const [preX, preY] = selectRange(energy, mu, e0 + p.preMin, e0 + p.preMax);
     const [postX0, postY] = selectRange(energy, mu, e0 + p.normMin, Math.min(energy.at(-1), e0 + p.normMax));
-    if (preX.length < 2 || postX0.length < p.normOrder + 2) throw new Error('指定範囲にフィット用のデータ点が不足しています。');
+    if (preX.length < 2 || postX0.length < p.normOrder + 2) throw new Error('The selected ranges do not contain enough data points for fitting.');
     const preC = polyfit(preX.map(v => v - e0), preY, 1);
     const postC = polyfit(postX0.map(v => (v - e0) / 1000), postY, p.normOrder);
     const pre = energy.map(v => polyval(preC, v - e0));
     const post = energy.map(v => polyval(postC, (v - e0) / 1000));
     const pre0 = polyval(preC, 0), post0 = polyval(postC, 0), edgeStep = post0 - pre0;
-    if (!Number.isFinite(edgeStep) || Math.abs(edgeStep) < 1e-10) throw new Error('Edge stepを計算できません。フィット範囲を確認してください。');
+    if (!Number.isFinite(edgeStep) || Math.abs(edgeStep) < 1e-10) throw new Error('Could not calculate the edge step. Check the fitting ranges.');
     const normalizedRaw = mu.map((v, i) => (v - pre[i]) / edgeStep);
     const normalized = normalizedRaw.map((v, i) => p.flatten && energy[i] > e0 ? v - ((post[i] - pre[i]) / edgeStep - 1) : v);
 

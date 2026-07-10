@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="ブラウザだけでXAFSデータの前処理・規格化・EXAFS抽出・フーリエ変換を行うワークベンチ">
+  <meta name="description" content="A browser-based workbench for XAFS preprocessing, normalization, EXAFS extraction, and Fourier transforms">
   <title>XAS Workbench</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,33 +17,33 @@
     <div class="brand"><strong>XAS</strong><span>WORKBENCH</span></div>
     <div class="project-name"><span class="pulse"></span><span id="project-title">Untitled analysis</span></div>
     <div class="top-actions">
-      <button class="quiet-button" id="guide-button" type="button">解析ガイド</button>
-      <button class="export-button" id="export-button" type="button">データを書き出す <span>↗</span></button>
+      <button class="quiet-button" id="guide-button" type="button">Analysis Guide</button>
+      <button class="export-button" id="export-button" type="button">Export Data <span>↗</span></button>
     </div>
   </header>
 
   <div class="app-shell">
     <aside class="dataset-panel panel">
       <div class="panel-heading">
-        <button class="panel-title-button" id="dataset-panel-toggle" type="button" aria-expanded="true" aria-controls="dataset-panel-content" title="データセットを折り畳む">
-          <span><span class="eyebrow">01 / INPUT</span><strong>データセット</strong></span><b aria-hidden="true">‹</b>
+        <button class="panel-title-button" id="dataset-panel-toggle" type="button" aria-expanded="true" aria-controls="dataset-panel-content" title="Collapse datasets">
+          <span><span class="eyebrow">01 / INPUT</span><strong>Datasets</strong></span><b aria-hidden="true">‹</b>
         </button>
-        <label class="icon-button" title="ファイルを追加">＋<input id="file-input" type="file" accept=".dat,.txt,.csv,.xmu" multiple hidden></label>
+        <label class="icon-button" title="Add files">＋<input id="file-input" type="file" accept=".dat,.txt,.csv,.xmu" multiple hidden></label>
       </div>
 
       <div class="panel-content" id="dataset-panel-content">
       <label class="dropzone" id="dropzone">
         <input id="drop-input" type="file" accept=".dat,.txt,.csv,.xmu" multiple hidden>
         <span class="drop-icon">⇩</span>
-        <strong>ファイルをドロップ</strong>
+        <strong>Drop Files</strong>
         <small>.dat, .xmu, .csv, .txt</small>
       </label>
-      <button class="sample-button" id="sample-button" type="button"><span>◇</span> Cu foil サンプルを開く</button>
+      <button class="sample-button" id="sample-button" type="button"><span>◇</span> Open Cu Foil Sample</button>
 
-      <div class="dataset-list-header"><span>読み込み済み</span><span id="dataset-count">0 DATASETS</span></div>
-      <div id="dataset-list" class="dataset-list" role="listbox" aria-label="データセット"></div>
+      <div class="dataset-list-header"><span>Loaded</span><span id="dataset-count">0 DATASETS</span></div>
+      <div id="dataset-list" class="dataset-list" role="listbox" aria-label="Datasets"></div>
 
-      <div class="privacy-note"><span>●</span><div><strong>LOCAL PROCESSING</strong><small>データは端末外へ送信されません</small></div></div>
+      <div class="privacy-note"><span>●</span><div><strong>LOCAL PROCESSING</strong><small>Your data never leaves this device</small></div></div>
       </div>
     </aside>
 
@@ -52,36 +52,36 @@
         <div class="plot-toolbar">
           <div class="plot-tabs" role="tablist">
             <button class="plot-tab active" data-view="energy" type="button"><span>E</span> μ(E)</button>
-            <button class="plot-tab" data-view="normalized" type="button"><span>N</span> 規格化</button>
+            <button class="plot-tab" data-view="normalized" type="button"><span>N</span> Normalized</button>
             <button class="plot-tab" data-view="k" type="button"><span>k</span> χ(k)</button>
             <button class="plot-tab" data-view="r" type="button"><span>R</span> |χ(R)|</button>
           </div>
           <div class="plot-actions">
-            <button class="mini-button" id="analysis-points-button" type="button" title="E₀と解析範囲の点を表示">解析点</button>
-            <button class="mini-button active" id="overlay-button" type="button" title="補助線を表示">補助線</button>
-            <button class="mini-button" id="legend-toggle-button" type="button">凡例</button>
-            <button class="mini-button" id="plot-layout-button" type="button">レイアウト</button>
-            <button class="mini-button" id="reset-zoom" type="button">オートスケール</button>
+            <button class="mini-button" id="analysis-points-button" type="button" title="Show E₀ and analysis range points">Analysis Points</button>
+            <button class="mini-button active" id="overlay-button" type="button" title="Show guide lines">Guides</button>
+            <button class="mini-button" id="legend-toggle-button" type="button">Legend</button>
+            <button class="mini-button" id="plot-layout-button" type="button">Layout</button>
+            <button class="mini-button" id="reset-zoom" type="button">Autoscale</button>
           </div>
         </div>
 
         <div class="chart-wrap" id="chart-wrap">
           <div class="empty-state" id="empty-state">
             <div class="empty-orbit"><span></span><span></span><i>μ</i></div>
-            <h2>解析データを読み込む</h2>
-            <p>測定ファイルをドロップするか、Cu foil の<br>サンプルデータで操作を試してください。</p>
-            <button id="empty-sample" type="button">サンプルを表示</button>
+            <h2>Load Analysis Data</h2>
+            <p>Drop a measurement file, or try the workflow<br>with the Cu foil sample data.</p>
+            <button id="empty-sample" type="button">Show Sample</button>
           </div>
-          <svg id="chart" role="img" aria-label="XAFS解析プロット" hidden></svg>
+          <svg id="chart" role="img" aria-label="XAFS analysis plot" hidden></svg>
           <div class="chart-tooltip" id="chart-tooltip" hidden></div>
           <div class="chart-legend" id="chart-legend"></div>
         </div>
 
         <div class="plot-footer">
           <div class="readout"><span>CURSOR</span><b id="cursor-x">—</b><small id="cursor-y">—</small></div>
-          <div class="analysis-state"><span class="state-dot"></span><span id="analysis-message">データを待っています</span></div>
-          <button class="metrics-toggle" id="metrics-toggle" type="button" aria-expanded="false" aria-controls="metrics-row">指標を表示</button>
-          <div class="plot-hint" id="plot-hint">ホイールで拡大 · ドラッグで移動</div>
+          <div class="analysis-state"><span class="state-dot"></span><span id="analysis-message">Waiting for data</span></div>
+          <button class="metrics-toggle" id="metrics-toggle" type="button" aria-expanded="false" aria-controls="metrics-row">Show Metrics</button>
+          <div class="plot-hint" id="plot-hint">Wheel to zoom · Drag to pan</div>
         </div>
       </section>
 
@@ -95,35 +95,35 @@
 
     <aside class="controls-panel panel">
       <div class="panel-heading control-heading">
-        <button class="panel-title-button" id="controls-panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel-content" title="解析条件を折り畳む">
-          <b aria-hidden="true">›</b><span><span class="eyebrow">02 / PROCESS</span><strong>解析条件</strong></span>
+        <button class="panel-title-button" id="controls-panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel-content" title="Collapse analysis settings">
+          <b aria-hidden="true">›</b><span><span class="eyebrow">02 / PROCESS</span><strong>Analysis</strong></span>
         </button>
-        <div class="control-heading-actions"><button id="save-params" class="text-button" type="button">条件保存</button><button id="load-params" class="text-button" type="button">条件読込</button><button id="reset-params" class="text-button" type="button">初期値</button></div>
+        <div class="control-heading-actions"><button id="save-params" class="text-button" type="button">Save</button><button id="load-params" class="text-button" type="button">Load</button><button id="reset-params" class="text-button" type="button">Defaults</button></div>
       </div>
       <div class="panel-content" id="controls-panel-content">
       <div class="control-scroll">
         <section class="control-section open">
-          <button class="section-toggle" type="button" aria-expanded="true"><span><i>1</i>吸収端と規格化</span><b>⌃</b></button>
+          <button class="section-toggle" type="button" aria-expanded="true"><span><i>1</i>Edge and Normalization</span><b>⌃</b></button>
           <div class="section-body">
             <label class="field wide"><span>E₀ <small>edge energy</small></span><div><input id="e0" type="number" step="0.1"><em>eV</em></div></label>
-            <button class="detect-button" id="detect-e0" type="button">微分最大から再検出</button>
+            <button class="detect-button" id="detect-e0" type="button">Detect from Max Derivative</button>
             <div class="subheading">PRE-EDGE RANGE <small>E − E₀</small></div>
             <div class="field-pair">
-              <label class="field"><span>最小</span><div><input id="pre-min" type="number" step="1"><em>eV</em></div></label>
-              <label class="field"><span>最大</span><div><input id="pre-max" type="number" step="1"><em>eV</em></div></label>
+              <label class="field"><span>Min</span><div><input id="pre-min" type="number" step="1"><em>eV</em></div></label>
+              <label class="field"><span>Max</span><div><input id="pre-max" type="number" step="1"><em>eV</em></div></label>
             </div>
             <div class="subheading">NORMALIZATION RANGE <small>E − E₀</small></div>
             <div class="field-pair">
-              <label class="field"><span>最小</span><div><input id="norm-min" type="number" step="1"><em>eV</em></div></label>
-              <label class="field"><span>最大</span><div><input id="norm-max" type="number" step="1"><em>eV</em></div></label>
+              <label class="field"><span>Min</span><div><input id="norm-min" type="number" step="1"><em>eV</em></div></label>
+              <label class="field"><span>Max</span><div><input id="norm-max" type="number" step="1"><em>eV</em></div></label>
             </div>
-            <label class="select-field"><span>多項式次数</span><select id="norm-order"><option value="0">0 — 定数</option><option value="1">1 — 直線</option><option value="2">2 — 二次</option><option value="3">3 — 三次</option></select></label>
-            <label class="switch-row"><span><b>フラット化</b><small>吸収端後を1付近に補正</small></span><input id="flatten" type="checkbox" checked><i></i></label>
+            <label class="select-field"><span>Polynomial Order</span><select id="norm-order"><option value="0">0 — Constant</option><option value="1">1 — Linear</option><option value="2">2 — Quadratic</option><option value="3">3 — Cubic</option></select></label>
+            <label class="switch-row"><span><b>Flatten</b><small>Adjust the post-edge region near 1</small></span><input id="flatten" type="checkbox" checked><i></i></label>
           </div>
         </section>
 
         <section class="control-section">
-          <button class="section-toggle" type="button" aria-expanded="false"><span><i>2</i>背景と EXAFS</span><b>⌃</b></button>
+          <button class="section-toggle" type="button" aria-expanded="false"><span><i>2</i>Background and EXAFS</span><b>⌃</b></button>
           <div class="section-body">
             <div class="field-pair">
               <label class="field"><span>Rbkg</span><div><input id="rbkg" type="number" min="0.5" max="2" step="0.05"><em>Å</em></div></label>
@@ -131,15 +131,15 @@
             </div>
             <div class="subheading">SPLINE RANGE <small>E − E₀</small></div>
             <div class="field-pair">
-              <label class="field"><span>最小</span><div><input id="spline-min" type="number" step="1"><em>eV</em></div></label>
-              <label class="field"><span>最大</span><div><input id="spline-max" type="number" step="1"><em>eV</em></div></label>
+              <label class="field"><span>Min</span><div><input id="spline-min" type="number" step="1"><em>eV</em></div></label>
+              <label class="field"><span>Max</span><div><input id="spline-max" type="number" step="1"><em>eV</em></div></label>
             </div>
-            <p class="method-note">低周波成分を平滑化スプライン近似し、μ₀(E) として差し引きます。</p>
+            <p class="method-note">Approximates the low-frequency component with a smoothing spline and subtracts it as μ₀(E).</p>
           </div>
         </section>
 
         <section class="control-section">
-          <button class="section-toggle" type="button" aria-expanded="false"><span><i>3</i>フーリエ変換</span><b>⌃</b></button>
+          <button class="section-toggle" type="button" aria-expanded="false"><span><i>3</i>Fourier Transform</span><b>⌃</b></button>
           <div class="section-body">
             <div class="field-pair">
               <label class="field"><span>k min</span><div><input id="k-min" type="number" min="0" step="0.1"><em>Å⁻¹</em></div></label>
@@ -147,108 +147,99 @@
             </div>
             <div class="field-pair">
               <label class="field"><span>dk</span><div><input id="dk" type="number" min="0" step="0.1"><em>Å⁻¹</em></div></label>
-              <label class="field"><span>表示 k-weight</span><div><input id="plot-kweight" type="number" min="0" max="3" step="1"><em>kʷ</em></div></label>
+              <label class="field"><span>Display k-weight</span><div><input id="plot-kweight" type="number" min="0" max="3" step="1"><em>kʷ</em></div></label>
             </div>
-            <label class="select-field"><span>窓関数</span><select id="window"><option value="hanning">Hanning</option><option value="kaiser">Kaiser–Bessel</option><option value="none">矩形</option></select></label>
-            <label class="switch-row"><span><b>窓関数を表示</b><small>χ(k) に重ねて確認</small></span><input id="show-window" type="checkbox"><i></i></label>
+            <label class="select-field"><span>Window Function</span><select id="window"><option value="hanning">Hanning</option><option value="kaiser">Kaiser–Bessel</option><option value="none">Rectangular</option></select></label>
+            <label class="switch-row"><span><b>Show Window Function</b><small>Overlay it on χ(k) for checking</small></span><input id="show-window" type="checkbox"><i></i></label>
           </div>
         </section>
       </div>
-      <div class="control-footer"><span>すべての変更は即時反映されます</span><span class="live-badge">LIVE</span></div>
+      <div class="control-footer"><span>All changes are applied immediately</span><span class="live-badge">LIVE</span></div>
       </div>
     </aside>
   </div>
 
   <dialog id="import-dialog" class="import-dialog">
     <div class="import-dialog-head">
-      <div><span class="eyebrow">IMPORT DATA</span><h2 id="import-file-name">データを読み込む</h2></div>
-      <button class="dialog-close" id="import-cancel" type="button" aria-label="キャンセル">×</button>
+      <div><span class="eyebrow">IMPORT DATA</span><h2 id="import-file-name">Load Data</h2></div>
+      <button class="dialog-close" id="import-cancel" type="button" aria-label="Cancel">×</button>
     </div>
-    <p class="import-description">下のプレビューを確認し、プロットに使用する列を選択してください。</p>
+    <p class="import-description">Check the preview below and select the columns to use for plotting.</p>
     <div class="import-layout">
       <section class="import-mapping">
-        <label class="import-field"><span>エネルギー</span><select id="energy-column"></select><small>横軸として使用する列</small></label>
-        <label class="import-field"><span>信号の計算</span><select id="signal-mode"><option value="transmission">ln（分子 / 分母）</option><option value="direct">μ(E) 列をそのまま使用</option></select></label>
+        <label class="import-field"><span>Energy</span><select id="energy-column"></select><small>Column used for the x-axis</small></label>
+        <label class="import-field"><span>Signal Calculation</span><select id="signal-mode"><option value="transmission">ln(numerator / denominator)</option><option value="direct">Use the μ(E) column directly</option></select></label>
         <div id="transmission-rows">
-          <label class="import-field numerator"><span>分子</span><select id="numerator-column"></select><small>通常は I0（入射X線強度）</small></label>
-          <label class="import-field denominator"><span>分母</span><select id="denominator-column"></select><small>通常は I1 / Is（透過X線強度）</small></label>
-          <div class="formula-preview">μ(E) = ln（<b id="formula-numerator">I0</b> / <b id="formula-denominator">I1</b>）</div>
+          <label class="import-field numerator"><span>Numerator</span><select id="numerator-column"></select><small>Usually I0 (incident X-ray intensity)</small></label>
+          <label class="import-field denominator"><span>Denominator</span><select id="denominator-column"></select><small>Usually I1 / Is (transmitted X-ray intensity)</small></label>
+          <div class="formula-preview">μ(E) = ln(<b id="formula-numerator">I0</b> / <b id="formula-denominator">I1</b>)</div>
         </div>
-        <label class="import-field" id="mu-column-row" hidden><span>μ(E)</span><select id="mu-column"></select><small>縦軸として直接使用する列</small></label>
+        <label class="import-field" id="mu-column-row" hidden><span>μ(E)</span><select id="mu-column"></select><small>Column used directly for the y-axis</small></label>
       </section>
       <section class="preview-section">
         <div class="preview-heading"><span>DATA PREVIEW</span><span id="preview-size"></span></div>
         <div class="preview-table-wrap"><table id="preview-table"></table></div>
-        <div class="preview-legend"><i class="energy"></i>エネルギー <i class="numerator"></i>分子 <i class="denominator"></i>分母</div>
+        <div class="preview-legend"><i class="energy"></i>Energy <i class="numerator"></i>Numerator <i class="denominator"></i>Denominator</div>
       </section>
     </div>
     <div class="import-error" id="import-error" hidden></div>
-    <div class="import-actions"><button id="import-skip" type="button">このファイルをスキップ</button><button class="apply-button" id="mapping-apply" type="button">選択した列で読み込む</button></div>
+    <div class="import-actions"><button id="import-skip" type="button">Skip This File</button><button class="apply-button" id="mapping-apply" type="button">Load Selected Columns</button></div>
   </dialog>
 
   <dialog id="guide-dialog">
     <button class="dialog-close" id="guide-close" type="button">×</button>
     <span class="eyebrow">QUICK GUIDE</span>
-    <h2>XAFS 解析の流れ</h2>
+    <h2>XAFS Analysis Workflow</h2>
     <ol>
-      <li><b>データを読み込む</b><span>μ(E)列、または透過法の I0 / I1 を割り当てます。</span></li>
-      <li><b>背景除去と規格化</b><span>E₀を確認し、pre-edgeとnormalizationの範囲を調整します。</span></li>
-      <li><b>EXAFS振動を抽出</b><span>背景曲線が振動の中心を通るように条件を確認します。</span></li>
-      <li><b>フーリエ変換</b><span>ノイズの少ないk範囲と窓関数を選び、|χ(R)|を確認します。</span></li>
+      <li><b>Load Data</b><span>Assign a μ(E) column, or I0 / I1 for transmission data.</span></li>
+      <li><b>Remove Background and Normalize</b><span>Check E₀ and adjust the pre-edge and normalization ranges.</span></li>
+      <li><b>Extract EXAFS Oscillations</b><span>Check the settings so the background curve follows the center of the oscillation.</span></li>
+      <li><b>Fourier Transform</b><span>Select a low-noise k range and window function, then inspect |χ(R)|.</span></li>
     </ol>
-    <p>本アプリは教育・予備解析向けです。精密解析では Athena / Larch 等との結果照合を推奨します。</p>
-  </dialog>
-
-  <dialog id="preset-dialog" class="preset-dialog">
-    <button class="dialog-close" id="preset-close" type="button" aria-label="閉じる">×</button>
-    <span class="eyebrow">SAVED PARAMETERS</span>
-    <h2>保存した解析条件</h2>
-    <p class="preset-description">保存済みの条件を現在選択しているデータセットへ適用します。</p>
-    <div id="preset-list" class="preset-list"></div>
-    <p id="preset-empty" class="preset-empty" hidden>保存済みの解析条件はまだありません。</p>
+    <p>This app is intended for education and preliminary analysis. For quantitative work, compare the results with tools such as Athena or Larch.</p>
   </dialog>
 
   <dialog id="legend-edit-dialog" class="legend-edit-dialog">
     <form id="legend-edit-form" method="dialog">
-      <button class="dialog-close" id="legend-edit-close" type="button" aria-label="閉じる">×</button>
+      <button class="dialog-close" id="legend-edit-close" type="button" aria-label="Close">×</button>
       <span class="eyebrow">LEGEND ITEM</span>
-      <h2>凡例を編集</h2>
+      <h2>Edit Legend</h2>
       <div class="legend-edit-fields">
-        <label for="legend-item-name">名前<input id="legend-item-name" type="text" required></label>
-        <label for="legend-item-font-size">文字サイズ<input id="legend-item-font-size" type="number" min="8" max="32" step="1" required></label>
+        <label for="legend-item-name">Name<input id="legend-item-name" type="text" required></label>
+        <label for="legend-item-font-size">Font Size<input id="legend-item-font-size" type="number" min="8" max="32" step="1" required></label>
       </div>
-      <div class="dialog-actions"><span class="dialog-spacer"></span><button type="button" value="cancel">キャンセル</button><button class="primary" type="submit">適用</button></div>
+      <div class="dialog-actions"><span class="dialog-spacer"></span><button type="button" value="cancel">Cancel</button><button class="primary" type="submit">Apply</button></div>
     </form>
   </dialog>
 
   <dialog id="plot-layout-dialog" class="plot-layout-dialog">
     <form id="plot-layout-form" method="dialog">
-      <button class="dialog-close" id="plot-layout-close" type="button" aria-label="閉じる">×</button>
+      <button class="dialog-close" id="plot-layout-close" type="button" aria-label="Close">×</button>
       <span class="eyebrow">PLOT LAYOUT</span>
-      <h2>グラフレイアウト</h2>
-      <p class="plot-layout-description">編集するデータを選び、表示順や線、マーカー、オフセットを調整します。</p>
-      <div id="plot-layout-empty" class="dialog-error" hidden>データセットを読み込んでください。</div>
+      <h2>Plot Layout</h2>
+      <p class="plot-layout-description">Select datasets to edit, then adjust display order, lines, markers, and offsets.</p>
+      <div id="plot-layout-empty" class="dialog-error" hidden>Load a dataset first.</div>
       <div id="plot-layout-body" class="plot-layout-body">
-        <section class="plot-series-pane" aria-label="データセットと表示順">
-          <div class="plot-series-head"><strong>データセット</strong><span id="plot-selection-count">0 selected</span></div>
-          <div class="plot-series-actions"><button id="plot-select-all" type="button">全選択</button><button id="plot-select-none" type="button">解除</button></div>
+        <section class="plot-series-pane" aria-label="Datasets and display order">
+          <div class="plot-series-head"><strong>Datasets</strong><span id="plot-selection-count">0 selected</span></div>
+          <div class="plot-series-actions"><button id="plot-select-all" type="button">Select All</button><button id="plot-select-none" type="button">Clear</button></div>
           <div id="plot-series-list" class="plot-series-list"></div>
         </section>
         <div id="plot-layout-controls" class="plot-layout-controls">
-          <label for="plot-render-mode">表示形式<select id="plot-render-mode"><option value="line">線</option><option value="line-markers">線 + 点</option><option value="markers">点のみ</option></select></label>
-          <label for="plot-line-style">線種<select id="plot-line-style"><option value="solid">実線</option><option value="dashed">破線</option></select></label>
-          <label for="plot-line-width">線幅<input id="plot-line-width" type="number" min="0.25" max="12" step="0.25" required></label>
-          <label for="plot-marker-shape">マーカー<select id="plot-marker-shape"><option value="circle">円</option><option value="square">四角</option><option value="diamond">ひし形</option><option value="triangle">三角</option><option value="cross">クロス</option></select></label>
-          <div class="plot-color-control"><label for="plot-color">色<input id="plot-color" type="color"></label><div id="plot-color-presets" class="plot-color-presets" aria-label="プリセット色"><button type="button" data-color="#6EB72D" aria-label="Green"></button><button type="button" data-color="#65508E" aria-label="Purple"></button><button type="button" data-color="#c39b45" aria-label="Amber"></button><button type="button" data-color="#4a9c9c" aria-label="Teal"></button><button type="button" data-color="#c8667c" aria-label="Rose"></button><button type="button" data-color="#b6a6d0" aria-label="Lavender"></button></div></div>
-          <label for="plot-x-offset">X オフセット<input id="plot-x-offset" type="number" step="any" required></label>
-          <label for="plot-y-offset">Y オフセット<input id="plot-y-offset" type="number" step="any" required></label>
-          <label for="plot-marker-size">点サイズ<input id="plot-marker-size" type="number" min="1" max="20" step="0.5" required></label>
-          <label for="plot-marker-stroke-width">点の線幅<input id="plot-marker-stroke-width" type="number" min="0" max="10" step="0.25" required></label>
-          <label class="marker-fill-option"><input id="plot-marker-filled" type="checkbox"> 塗りつぶす</label>
-          <label class="marker-fill-option"><input id="plot-hidden" type="checkbox"> グラフで非表示</label>
+          <label for="plot-render-mode">Render Mode<select id="plot-render-mode"><option value="line">Line</option><option value="line-markers">Line + Markers</option><option value="markers">Markers Only</option></select></label>
+          <label for="plot-line-style">Line Style<select id="plot-line-style"><option value="solid">Solid</option><option value="dashed">Dashed</option></select></label>
+          <label for="plot-line-width">Line Width<input id="plot-line-width" type="number" min="0.25" max="12" step="0.25" required></label>
+          <label for="plot-marker-shape">Marker<select id="plot-marker-shape"><option value="circle">Circle</option><option value="square">Square</option><option value="diamond">Diamond</option><option value="triangle">Triangle</option><option value="cross">Cross</option></select></label>
+          <div class="plot-color-control"><label for="plot-color">Color<input id="plot-color" type="color"></label><div id="plot-color-presets" class="plot-color-presets" aria-label="Preset colors"><button type="button" data-color="#6EB72D" aria-label="Green"></button><button type="button" data-color="#65508E" aria-label="Purple"></button><button type="button" data-color="#c39b45" aria-label="Amber"></button><button type="button" data-color="#4a9c9c" aria-label="Teal"></button><button type="button" data-color="#c8667c" aria-label="Rose"></button><button type="button" data-color="#b6a6d0" aria-label="Lavender"></button></div></div>
+          <label for="plot-x-offset">X Offset<input id="plot-x-offset" type="number" step="any" required></label>
+          <label for="plot-y-offset">Y Offset<input id="plot-y-offset" type="number" step="any" required></label>
+          <label for="plot-marker-size">Marker Size<input id="plot-marker-size" type="number" min="1" max="20" step="0.5" required></label>
+          <label for="plot-marker-stroke-width">Marker Stroke Width<input id="plot-marker-stroke-width" type="number" min="0" max="10" step="0.25" required></label>
+          <label class="marker-fill-option"><input id="plot-marker-filled" type="checkbox"> Fill Markers</label>
+          <label class="marker-fill-option"><input id="plot-hidden" type="checkbox"> Hide in Plot</label>
         </div>
       </div>
-      <div class="dialog-actions plot-layout-actions"><button id="plot-style-reset" type="button">初期値</button><span class="dialog-spacer"></span><button type="button" value="cancel">キャンセル</button><button class="primary" type="submit">適用</button></div>
+      <div class="dialog-actions plot-layout-actions"><button id="plot-style-reset" type="button">Defaults</button><span class="dialog-spacer"></span><button type="button" value="cancel">Cancel</button><button class="primary" type="submit">Apply</button></div>
     </form>
   </dialog>
 

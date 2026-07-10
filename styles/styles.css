@@ -81,6 +81,55 @@ dialog { width: min(520px, calc(100vw - 30px)); color: var(--text); background: 
 .import-dialog-head { height: 70px; padding: 17px 22px; display: flex; align-items: center; border-bottom: 1px solid var(--line); }.import-dialog-head h2 { margin: 3px 0 0; max-width: 750px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }.import-description { margin: 0 !important; padding: 12px 22px !important; border: 0 !important; border-bottom: 1px solid var(--line-soft) !important; background: #0a1519 !important; }
 .import-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 370px; }.import-mapping { padding: 18px; border-right: 1px solid var(--line); background: #0b161a; }.import-field { display: block; margin-bottom: 15px; }.import-field > span { display: block; color: #b9c5c8; font-size: 10px; font-weight: 600; margin-bottom: 6px; }.import-field select { width: 100%; height: 35px; border: 1px solid #29414a; border-radius: 3px; background: #071115; color: var(--text); padding: 0 9px; font: 9px var(--mono); }.import-field select:focus { outline: 1px solid var(--cyan-dim); }.import-field small { display: block; color: #5e7279; font-size: 8px; margin-top: 5px; }.import-field.numerator > span:before, .import-field.denominator > span:before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 6px; }.import-field.numerator > span:before { background: var(--amber); }.import-field.denominator > span:before { background: var(--violet); }.formula-preview { margin-top: -4px; padding: 9px; background: #081216; border: 1px solid var(--line-soft); color: #82949a; font: 9px var(--mono); }.formula-preview b:first-child { color: var(--amber); }.formula-preview b:last-child { color: var(--violet); }
 .preview-section { min-width: 0; padding: 18px; display: flex; flex-direction: column; }.preview-heading { display: flex; justify-content: space-between; color: #75888e; font: 500 8px var(--mono); letter-spacing: 1px; margin-bottom: 8px; }.preview-table-wrap { flex: 1; max-height: 330px; overflow: auto; border: 1px solid var(--line); background: #071115; scrollbar-width: thin; scrollbar-color: #294149 transparent; }.preview-table { border-collapse: collapse; min-width: 100%; white-space: nowrap; font: 9px var(--mono); }.preview-table th, .preview-table td { height: 29px; padding: 0 11px; text-align: right; border-right: 1px solid #1b2b31; border-bottom: 1px solid #15252b; }.preview-table th { position: sticky; z-index: 2; top: 0; background: #111f24; color: #9aabb0; text-align: left; font-weight: 500; }.preview-table th:first-child, .preview-table td:first-child { position: sticky; left: 0; z-index: 1; background: #0d1a1f; color: #586c73; text-align: right; }.preview-table th:first-child { z-index: 3; background: #111f24; }.preview-table .selected-energy { background: #113038; color: #89e5ed; }.preview-table .selected-numerator { background: #2a251b; color: #efc175; }.preview-table .selected-denominator { background: #24203b; color: #b7aafc; }.preview-legend { min-height: 28px; padding-top: 9px; display: flex; align-items: center; gap: 5px; color: #667a81; font-size: 8px; }.preview-legend i { width: 8px; height: 8px; border-radius: 2px; margin-left: 10px; }.preview-legend i:first-child { margin-left: 0; }.preview-legend .energy { background: var(--cyan-dim); }.preview-legend .numerator { background: var(--amber); }.preview-legend .denominator { background: var(--violet); }
+.import-dialog {
+  --preview-energy-bg: #113038;
+  --preview-energy-fg: #89e5ed;
+  --preview-numerator-bg: #2a251b;
+  --preview-numerator-fg: #efc175;
+  --preview-denominator-bg: #24203b;
+  --preview-denominator-fg: #b7aafc;
+}
+
+.preview-table .selected-energy {
+  background: var(--preview-energy-bg);
+  color: var(--preview-energy-fg);
+}
+
+.preview-table .selected-numerator {
+  background: var(--preview-numerator-bg);
+  color: var(--preview-numerator-fg);
+}
+
+.preview-table .selected-denominator {
+  background: var(--preview-denominator-bg);
+  color: var(--preview-denominator-fg);
+}
+
+.preview-legend .energy {
+  background: var(--preview-energy-bg);
+  border: 1px solid var(--preview-energy-fg);
+}
+
+.preview-legend .numerator,
+.import-field.numerator > span:before {
+  background: var(--preview-numerator-bg);
+  border: 1px solid var(--preview-numerator-fg);
+}
+
+.preview-legend .denominator,
+.import-field.denominator > span:before {
+  background: var(--preview-denominator-bg);
+  border: 1px solid var(--preview-denominator-fg);
+}
+
+.formula-preview b:first-child {
+  color: var(--preview-numerator-fg);
+}
+
+.formula-preview b:last-child {
+  color: var(--preview-denominator-fg);
+}
+
 .import-actions { height: 62px; padding: 13px 18px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); background: #091317; }.import-actions > button { width: auto; min-width: 150px; height: 35px; margin: 0; }.import-actions > button:first-child { border: 1px solid var(--line); background: transparent; color: #84969b; border-radius: 3px; font-size: 9px; cursor: pointer; }.import-error { margin: 0 18px 10px; padding: 9px 11px; color: #f0a5b8; background: #2b151c; border: 1px solid #6b2d3e; font-size: 9px; }
 .apply-params-dialog { width: min(520px, calc(100vw - 30px)); }.apply-params-dialog h2 { margin-bottom: 8px; }.apply-params-description { margin-bottom: 15px !important; }.apply-targets { max-height: 240px; overflow: auto; border: 1px solid var(--line); border-radius: 3px; }.apply-targets > label { min-height: 52px; padding: 8px 11px; display: grid; grid-template-columns: 16px 5px 1fr; align-items: center; gap: 10px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }.apply-targets > label:last-child { border-bottom: 0; }.apply-targets > label:hover { background: var(--panel-2); }.apply-targets .dataset-color { height: 30px; }.apply-targets b, .apply-targets small { display: block; }.apply-targets b { font-size: 10px; }.apply-targets small { margin-top: 4px; color: var(--muted); font: 8px var(--mono); }.copy-e0-row { min-height: 56px; display: flex; align-items: center; gap: 10px; cursor: pointer; }.copy-e0-row span b, .copy-e0-row span small { display: block; }.copy-e0-row span b { font-size: 10px; }.copy-e0-row span small { margin-top: 4px; color: var(--muted); font-size: 8px; }.apply-dialog-actions { padding-top: 12px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line-soft); }.apply-dialog-actions button { width: auto; min-width: 130px; height: 34px; margin: 0; border-radius: 3px; cursor: pointer; }.apply-dialog-actions > button:first-child { border: 1px solid var(--line); background: transparent; color: var(--muted); }
 .apply-dialog-actions button:disabled { opacity: .4; cursor: default; }
@@ -436,77 +485,6 @@ dialog {
 
 .workspace.metrics-collapsed .metrics-row {
   display: none;
-}
-
-.preset-dialog {
-  width: min(620px, calc(100vw - 30px));
-}
-
-.preset-dialog h2 {
-  margin-bottom: 8px;
-}
-
-.preset-description {
-  margin-bottom: 15px !important;
-}
-
-.preset-list {
-  display: grid;
-  gap: 8px;
-  max-height: 340px;
-  overflow: auto;
-}
-
-.preset-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 54px;
-  padding: 9px 10px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--panel) 82%, var(--bg));
-}
-
-.preset-item b,
-.preset-item small {
-  display: block;
-}
-
-.preset-item b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-}
-
-.preset-item small {
-  margin-top: 4px;
-  color: var(--muted);
-  font: 8px var(--mono);
-}
-
-.preset-item button {
-  min-width: 54px;
-  height: 29px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--muted);
-  background: transparent;
-  cursor: pointer;
-  font-size: 10px;
-}
-
-.preset-item button:hover,
-.preset-item button:focus {
-  color: var(--text);
-  border-color: var(--cyan-dim);
-  outline: none;
-}
-
-.preset-empty {
-  margin: 0 !important;
 }
 
 .legend-edit-dialog {
