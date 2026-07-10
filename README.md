@@ -1,6 +1,6 @@
 # XAS Workbench
 
-A static, browser-only XAFS analysis workbench for education and preliminary analysis.
+A browser-only XAFS analysis workbench for education and preliminary analysis, wrapped in a minimal Next.js app for Vercel Web Analytics support.
 
 ## Features
 
@@ -15,10 +15,10 @@ A static, browser-only XAFS analysis workbench for education and preliminary ana
 ## Local Development
 
 ```bash
-npm start
+npm run dev
 ```
 
-Open `http://localhost:8080` in a browser. The app does not require a backend API.
+Open `http://localhost:3000` in a browser. The app does not require a backend API.
 
 ## Tests
 
@@ -28,20 +28,25 @@ npm test
 
 ## Vercel Deployment
 
-This project is a static HTML/CSS/JavaScript app. Configure Vercel as:
+This project is deployed as a minimal Next.js App Router app. Configure Vercel as:
 
-- Framework Preset: `Other`
-- Build Command: empty
-- Output Directory: `.`
+- Framework Preset: `Next.js`
+- Build Command: `next build`
 - Root Directory: `XAS-Viewer` if this folder is deployed from a larger repository
 
-The repository includes `vercel.json` for static output and security headers. It also includes `.vercelignore` so local measurement files under `data/` are not uploaded by Vercel CLI deployments.
+The repository includes `vercel.json` for the Next.js framework preset and security headers. It also includes `.vercelignore` so local measurement files under `data/` are not uploaded by Vercel CLI deployments.
 
 Do not commit private measurement files. Keep real datasets outside Git, or place them under `data/`, which is ignored.
 
 The UI uses local system font fallbacks and does not depend on external font requests.
 
-Vercel Web Analytics is included with the plain HTML script at `/_vercel/insights/script.js`. Enable Web Analytics in the Vercel project dashboard for page views to appear.
+Vercel Web Analytics is included in `app/layout.js` with the official Next.js component:
+
+```js
+import { Analytics } from '@vercel/analytics/next';
+```
+
+Enable Web Analytics in the Vercel project dashboard for page views to appear.
 
 ## Browser Limits
 
